@@ -14,6 +14,8 @@ type Props = {
   generationDone: boolean;
   reviewStatus: ReviewStatus;
   onReviewStatusChange: (status: ReviewStatus) => void;
+  /** Called with the newly-saved markdown when completing persists an edit made here. */
+  onSaved: (markdown: string) => void;
 };
 
 type Group = { key: string; name: string; type?: string; title?: string; loc?: string; items: Issue[] };
@@ -160,8 +162,10 @@ export function CueCardValidatorDialog(p: Props) {
   const revalidate = () => setResult(validateMarkdown(text));
   const { errGroups, warnGroups } = useMemo(() => (result ? toGroups(result) : { errGroups: [], warnGroups: [] }), [result]);
 
-  // "Mark as completed" only makes sense when the textarea still matches the saved output — if the
-  // reader edited it just to test something, they're validating a hypothetical, not the real deck.
+  // Just an informational flag now (shown next to "Reset to saved") — completing no longer requires
+  // this to be false. Fixing an error right here in the textarea and completing is the point: the
+  // server re-validates and saves whatever's in `text` as part of "complete" (see act() below), so
+  // there's nothing unsafe about completing straight from an edit.
   const editedFromSaved = text !== p.markdown;
 
   async function act(action: "complete" | "revert") {
@@ -171,7 +175,7 @@ export function CueCardValidatorDialog(p: Props) {
       const res = await fetch(`/api/decks/${p.deckId}/complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(action === "complete" ? { action, markdown: text } : { action }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -179,6 +183,9 @@ export function CueCardValidatorDialog(p: Props) {
         if (body.result) setResult(body.result); // server's authoritative re-check, if it ran one
         return;
       }
+      // The server only reports this back when it actually persisted `text` as a new edit — a
+      // "complete" that matched what was already saved has nothing new to reflect here.
+      if (typeof body.savedMarkdown === "string") p.onSaved(body.savedMarkdown);
       p.onReviewStatusChange(body.reviewStatus);
     } catch {
       setCompleteError("Network error. Check your connection and retry.");
@@ -290,19 +297,20 @@ export function CueCardValidatorDialog(p: Props) {
             <button
               type="button"
               onClick={() => void act("complete")}
-              disabled={completing || !p.generationDone || !verdictPass || editedFromSaved}
+              disabled={completing || !p.generationDone || !verdictPass}
               title={
                 !p.generationDone
                   ? "Generation isn't finished yet."
-                  : editedFromSaved
-                    ? "Reset to the saved markdown before marking completed — edits here aren't saved."
-                    : !verdictPass
-                      ? "Fix the errors above first."
+                  : !verdictPass
+                    ? "Fix the errors above first."
+                    : editedFromSaved
+                      ? "Saves your edit here as the deck's cue cards, and marks it completed."
                       : undefined
               }
               className={primary}
             >
-              {completing && <Spinner className="mr-2 inline h-3.5 w-3.5" />}Mark as completed
+              {completing && <Spinner className="mr-2 inline h-3.5 w-3.5" />}
+              {editedFromSaved ? "Save & mark as completed" : "Mark as completed"}
             </button>
           )}
           <button type="button" onClick={p.onClose} className={ghost}>Close</button>

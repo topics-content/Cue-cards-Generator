@@ -88,10 +88,13 @@ export async function setDeckStatus(id: string, status: DeckRow["status"]) {
 /** Only what the review-gate route needs: enough to check ownership, generation status, and re-run the validator on the real saved output. */
 export async function getDeckForReview(
   id: string,
-): Promise<{ id: string; created_by: string; status: DeckRow["status"]; review_status: ReviewStatus; output_md: string } | null> {
+): Promise<
+  | { id: string; created_by: string; status: DeckRow["status"]; review_status: ReviewStatus; output_md: string; edited_output_md: string | null }
+  | null
+> {
   const { data, error } = await db()
     .from("decks")
-    .select("id, created_by, status, review_status, output_md")
+    .select("id, created_by, status, review_status, output_md, edited_output_md")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -105,6 +108,19 @@ export async function getDeckForReview(
  */
 export async function setReviewStatus(id: string, status: ReviewStatus) {
   const { error } = await db().from("decks").update({ review_status: status }).eq("id", id);
+  if (error) throw error;
+}
+
+/**
+ * Persists a manual edit made in the in-app validator as the deck's new source of truth for
+ * display/copy/download and for future completion checks. Only ever called after the caller
+ * itself re-validated this exact markdown as clean (see /api/decks/[id]/complete) — this function
+ * does no validation of its own. Deliberately does NOT touch deck_sections: rewriting per-section
+ * rows to match an edit that may have crossed section boundaries isn't well-defined, so the
+ * original generation record is left alone underneath this override.
+ */
+export async function saveEditedOutput(id: string, markdown: string) {
+  const { error } = await db().from("decks").update({ edited_output_md: markdown }).eq("id", id);
   if (error) throw error;
 }
 

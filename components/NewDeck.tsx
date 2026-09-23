@@ -131,6 +131,7 @@ export function NewDeck({ inrRate }: { inrRate: number }) {
           initialOutputs={[]}
           initialStats={{ inputTokens: 0, outputTokens: 0, cachedTokens: 0, costUsd: 0 }}
           initialReviewStatus="draft"
+          initialEditedOutput={null}
           initialDurationMs={null}
           inrRate={inrRate}
           budget={run.parsed.budget}

@@ -25,6 +25,8 @@ type Props = {
   generationDone: boolean;
   reviewStatus: ReviewStatus;
   onReviewStatusChange: (status: ReviewStatus) => void;
+  /** Called with the newly-saved markdown when the validator persists an edit (as part of marking completed). */
+  onSaved: (markdown: string) => void;
 };
 
 function CopyButton({ text, label, className = "" }: { text: string; label: string; className?: string }) {
@@ -200,6 +202,7 @@ export function OutputView(p: Props) {
         generationDone={p.generationDone}
         reviewStatus={p.reviewStatus}
         onReviewStatusChange={p.onReviewStatusChange}
+        onSaved={p.onSaved}
       />
     </div>
   );

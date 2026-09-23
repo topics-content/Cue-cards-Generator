@@ -23,6 +23,8 @@ type Props = {
   initialOutputs: string[];
   initialStats: Stats;
   initialReviewStatus: ReviewStatus;
+  /** A manual edit saved from the in-app validator, if any — takes over as the displayed markdown when present, in place of the generated sections. */
+  initialEditedOutput: string | null;
   /** Persisted created-to-finished time from a past run, shown until/unless this session runs its own (live) timer. Null if the deck has never finished. */
   initialDurationMs: number | null;
   inrRate: number;
@@ -60,6 +62,7 @@ export function DeckRunner(p: Props) {
   const [phase, setPhase] = useState<Phase>(() => (p.initialStop ? "budget" : outputs.current.every(Boolean) ? "done" : "idle"));
   const [stats, setStats] = useState<Stats>(p.initialStats);
   const [reviewStatus, setReviewStatus] = useState<ReviewStatus>(p.initialReviewStatus);
+  const [editedOutput, setEditedOutput] = useState<string | null>(p.initialEditedOutput);
   const [error, setError] = useState<{ index: number; message: string } | null>(null);
   const [stop, setStop] = useState<BudgetStop | null>(p.initialStop ?? null);
   const [continuing, setContinuing] = useState(false);
@@ -229,7 +232,9 @@ export function DeckRunner(p: Props) {
     return n ? Math.min(1, points / n) : 0;
   }, [drafted, finals, n]);
 
-  const markdown = texts.filter((t) => t.trim()).join("\n\n");
+  // A saved manual edit is the deck's source of truth for display once it exists — the generated
+  // per-section texts underneath are untouched and keep driving progress/resume, just not the view.
+  const markdown = editedOutput ?? texts.filter((t) => t.trim()).join("\n\n");
   const box = "rounded-lg border px-4 py-4 text-sm";
   const primary = "rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg transition hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
   const ghost = "rounded-lg border border-line px-4 py-2 text-sm font-medium transition hover:border-accent";
@@ -258,6 +263,7 @@ export function DeckRunner(p: Props) {
       generationDone={phase === "done"}
       reviewStatus={reviewStatus}
       onReviewStatusChange={setReviewStatus}
+      onSaved={setEditedOutput}
     >
       {phase !== "done" || n > 1 ? (
         <div className="rounded-xl border border-line bg-surface p-4">

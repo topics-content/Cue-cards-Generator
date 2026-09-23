@@ -32,6 +32,7 @@ export default async function DeckPage({ params }: { params: { id: string } }) {
       initialOutputs={outputs}
       initialStats={deck.cost}
       initialReviewStatus={deck.reviewStatus}
+      initialEditedOutput={deck.editedOutput}
       initialDurationMs={durationMs(deck)}
       inrRate={Number(process.env.INR_RATE ?? 95)}
       budget={tiers[0]}
