@@ -133,6 +133,26 @@ describe("validateMarkdown", () => {
     expect(backtickedMessages.some((m) => m.includes("disallowed characters"))).toBe(false);
   });
 
+  it("allows == in a title outside backticks", () => {
+    const r = validateMarkdown(CUE.replace("title: Introduction to Arrays", "title: Checking x == y in Arrays"));
+    const messages = r.cards.flatMap((c) => c.errors.map((e) => e.msg));
+    expect(messages.some((m) => m.includes("disallowed characters"))).toBe(false);
+  });
+
+  it("allows any character inside backticks except : and ---, which still error", () => {
+    const anything = validateMarkdown(CUE.replace("title: Introduction to Arrays", "title: Reserved word `SELECT * FROM x WHERE y > 50%`"));
+    const anythingMessages = anything.cards.flatMap((c) => c.errors.map((e) => e.msg));
+    expect(anythingMessages.some((m) => m.includes("disallowed characters"))).toBe(false);
+
+    const withColon = validateMarkdown(CUE.replace("title: Introduction to Arrays", "title: Reserved word `key: value`"));
+    const colonMessages = withColon.cards.flatMap((c) => c.errors.map((e) => e.msg));
+    expect(colonMessages.some((m) => m.includes('contains ":"'))).toBe(true);
+
+    const withDashes = validateMarkdown(CUE.replace("title: Introduction to Arrays", "title: Reserved word `a --- b`"));
+    const dashMessages = withDashes.cards.flatMap((c) => c.errors.map((e) => e.msg));
+    expect(dashMessages.some((m) => m.includes('contains "---"'))).toBe(true);
+  });
+
   it("does not flag an empty description value as an error", () => {
     const emptyDescription = CUE.replace("description: Optional description for introduction to arrays slide", "description:");
     const r = validateMarkdown(emptyDescription);

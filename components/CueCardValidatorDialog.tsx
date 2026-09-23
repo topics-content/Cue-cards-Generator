@@ -212,8 +212,8 @@ export function CueCardValidatorDialog(p: Props) {
           </button>
         </div>
 
-        <div className="grid min-h-0 flex-1 gap-4 overflow-hidden p-5 lg:grid-cols-2">
-          <section className="flex min-h-0 flex-col rounded-lg border border-line">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-5 lg:flex-row">
+          <section className="flex min-h-0 flex-col rounded-lg border border-line lg:min-w-0 lg:flex-1">
             <div className="flex items-center justify-between border-b border-line px-3 py-2 text-xs">
               <span className="font-semibold uppercase tracking-wide text-muted">Markdown</span>
               <div className="flex items-center gap-2">
@@ -248,7 +248,14 @@ export function CueCardValidatorDialog(p: Props) {
             </div>
           </section>
 
-          <section className="flex min-h-0 flex-col overflow-y-auto rounded-lg border border-line p-3">
+          {/*
+            Not `flex flex-col`: its children (the verdict banner, error box, warning box) don't
+            need flex layout, and making them flex items gave them a default flex-shrink of 1 with
+            no min-height override — the flex algorithm was crushing the error list down to fit
+            instead of letting it overflow, so there was never anything for overflow-y-auto to
+            actually scroll to (see the scrollHeight/offsetHeight investigation that found this).
+          */}
+          <section className="min-h-0 overflow-y-auto rounded-lg border border-line p-3 lg:min-w-0 lg:flex-1">
             {result == null ? (
               <p className="text-sm text-muted">Awaiting input.</p>
             ) : (

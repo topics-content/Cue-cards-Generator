@@ -27,7 +27,7 @@ export type ValidationResult = {
 const KEYS = ["title", "description", "duration", "card_type"] as const;
 const KNOWN = new Set<string>(KEYS);
 const EMOJI = /\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]/gu;
-const TITLE_OK = /[A-Za-z0-9 .+*/,?'"&()[\]\u2018\u2019\u201C\u201D:\-`\u2014]/g;
+const TITLE_OK = /[A-Za-z0-9 .+*/=,?'"&()[\]\u2018\u2019\u201C\u201D:\-`\u2014]/g;
 
 type CardSpan = { open: number; metaStart: number; metaEnd: number; close: number; bodyStart: number; bodyEnd: number };
 
@@ -73,7 +73,10 @@ function checkTextRules(value: string, ln: number, field: string, errors: Issue[
     errors.push({ line: ln, msg: `${field} contains "---".`, hint: "Remove the triple dashes — --- is only for metadata delimiters." });
   }
   const cleaned = value.replace(EMOJI, "").replace(/[️‍⃣]/g, "");
-  const codeSpansStripped = cleaned.replace(/`[^`]*`/g, (m) => m.replace(/_/g, ""));
+  // Anything is allowed inside a backtick-quoted span — drop the whole span (backticks and all)
+  // before checking the character class. ":" and "---" are still caught regardless of location by
+  // the checks above, which run against the raw, unstripped value.
+  const codeSpansStripped = cleaned.replace(/`[^`]*`/g, "");
   const bad = codeSpansStripped.replace(TITLE_OK, "");
   if (bad.length) {
     const list = [...new Set(bad.split(""))].map((x) => (x === " " ? "space" : x)).join(" ");
@@ -81,7 +84,7 @@ function checkTextRules(value: string, ln: number, field: string, errors: Issue[
       line: ln,
       msg: `${field} has disallowed characters: ${list}`,
       hint:
-        "Allowed: letters, digits, spaces, hyphens, em dashes (—), backtick-quoted code, and , ? ' \" & ( ) [ ]  — nothing else (no full stop, no emojis, underscores only inside backticks).",
+        "Allowed: letters, digits, spaces, hyphens, em dashes (—), =, backtick-quoted code (anything, except : or ---), and , ? ' \" & ( ) [ ]  — nothing else (no full stop, no emojis).",
     });
   }
 }
