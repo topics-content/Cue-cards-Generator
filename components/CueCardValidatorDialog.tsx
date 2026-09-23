@@ -18,19 +18,22 @@ type Props = {
 
 type Group = { key: string; name: string; type?: string; title?: string; loc?: string; items: Issue[] };
 
-function IssueRow({ issue, tone }: { issue: Issue; tone: "e" | "w" }) {
+function IssueRow({ issue, tone, onJump }: { issue: Issue; tone: "e" | "w"; onJump: (line: number) => void }) {
   const border = tone === "e" ? "border-l-danger" : "border-l-warn";
   const tagCls = tone === "e" ? "bg-danger-soft text-danger" : "bg-warn-soft text-warn";
   return (
     <div className={`mt-2 rounded-md border border-line border-l-4 ${border} bg-background p-3 text-xs leading-relaxed`}>
       <span className={`mr-2 rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide ${tagCls}`}>{tone === "e" ? "ERROR" : "WARN"}</span>
-      <span className="font-semibold text-muted">L{issue.line}</span> <span>{issue.msg}</span>
+      <button type="button" onClick={() => onJump(issue.line)} className="font-semibold text-muted underline decoration-dotted hover:text-brand" title="Jump to this line">
+        L{issue.line}
+      </button>{" "}
+      <span>{issue.msg}</span>
       {issue.hint && <span className="mt-1 block text-muted">↳ {issue.hint}</span>}
     </div>
   );
 }
 
-function IssueGroupRow({ g, tone, open, onToggle }: { g: Group; tone: "e" | "w"; open: boolean; onToggle: () => void }) {
+function IssueGroupRow({ g, tone, open, onToggle, onJump }: { g: Group; tone: "e" | "w"; open: boolean; onToggle: () => void; onJump: (line: number) => void }) {
   return (
     <div className="border-t border-line first:border-t-0">
       <button
@@ -45,12 +48,12 @@ function IssueGroupRow({ g, tone, open, onToggle }: { g: Group; tone: "e" | "w";
         <span className="ml-auto rounded-full bg-line px-1.5 py-0.5 text-[10px] font-bold text-muted">{g.items.length}</span>
         {g.loc && <span className="whitespace-nowrap text-muted">{g.loc}</span>}
       </button>
-      {open && <div className="px-3 pb-3">{g.items.map((it, i) => <IssueRow key={i} issue={it} tone={tone} />)}</div>}
+      {open && <div className="px-3 pb-3">{g.items.map((it, i) => <IssueRow key={i} issue={it} tone={tone} onJump={onJump} />)}</div>}
     </div>
   );
 }
 
-function IssueBox({ kind, groups, total }: { kind: "err" | "warn"; groups: Group[]; total: number }) {
+function IssueBox({ kind, groups, total, onJump }: { kind: "err" | "warn"; groups: Group[]; total: number; onJump: (line: number) => void }) {
   const [boxOpen, setBoxOpen] = useState(kind === "err" ? total > 0 : total > 0);
   const [rowOpen, setRowOpen] = useState<Record<string, boolean>>(() => Object.fromEntries(groups.map((g) => [g.key, true])));
   const isErr = kind === "err";
@@ -81,7 +84,7 @@ function IssueBox({ kind, groups, total }: { kind: "err" | "warn"; groups: Group
             <p className="p-3 text-xs text-muted">No {label.toLowerCase()} found.</p>
           ) : (
             groups.map((g) => (
-              <IssueGroupRow key={g.key} g={g} tone={tone} open={rowOpen[g.key] ?? true} onToggle={() => setRowOpen((s) => ({ ...s, [g.key]: !s[g.key] }))} />
+              <IssueGroupRow key={g.key} g={g} tone={tone} open={rowOpen[g.key] ?? true} onToggle={() => setRowOpen((s) => ({ ...s, [g.key]: !s[g.key] }))} onJump={onJump} />
             ))
           )}
         </div>
@@ -111,10 +114,33 @@ function toGroups(result: ValidationResult): { errGroups: Group[]; warnGroups: G
  */
 export function CueCardValidatorDialog(p: Props) {
   const ref = useRef<HTMLDialogElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const gutterRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState(p.markdown);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [completing, setCompleting] = useState(false);
   const [completeError, setCompleteError] = useState<string | null>(null);
+
+  // Keep the line-number gutter's scroll glued to the textarea's — it has no scrollbar of its own.
+  const syncGutterScroll = () => {
+    if (gutterRef.current && textareaRef.current) gutterRef.current.scrollTop = textareaRef.current.scrollTop;
+  };
+
+  // Scrolls the textarea so a given source line (1-based, matching an issue's L<N>) is visible and
+  // selected. Lines can't wrap in this textarea (see the `wrap="off"` below) specifically so this
+  // math — line index × line height — stays exact; a wrapped line would break that correspondence.
+  const jumpToLine = (line: number) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const lines = text.split("\n");
+    const idx = Math.min(Math.max(line, 1), lines.length) - 1;
+    const start = lines.slice(0, idx).reduce((n, l) => n + l.length + 1, 0);
+    ta.focus();
+    ta.setSelectionRange(start, start + lines[idx].length);
+    const lineHeight = ta.scrollHeight / lines.length;
+    ta.scrollTop = Math.max(0, lineHeight * idx - ta.clientHeight / 2);
+    syncGutterScroll();
+  };
 
   useEffect(() => {
     const d = ref.current;
@@ -197,12 +223,26 @@ export function CueCardValidatorDialog(p: Props) {
                 </button>
               </div>
             </div>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              spellCheck={false}
-              className="min-h-0 flex-1 resize-none bg-transparent p-3 font-mono text-xs leading-relaxed outline-none"
-            />
+            <div className="flex min-h-0 flex-1">
+              <div
+                ref={gutterRef}
+                aria-hidden
+                className="select-none overflow-hidden bg-background py-3 pl-2 pr-2 text-right font-mono text-xs leading-relaxed text-muted"
+              >
+                {text.split("\n").map((_, i) => (
+                  <div key={i}>{i + 1}</div>
+                ))}
+              </div>
+              <textarea
+                ref={textareaRef}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onScroll={syncGutterScroll}
+                spellCheck={false}
+                wrap="off"
+                className="min-h-0 flex-1 resize-none overflow-auto whitespace-pre bg-transparent p-3 font-mono text-xs leading-relaxed outline-none"
+              />
+            </div>
             <div className="border-t border-line p-2">
               <button type="button" onClick={revalidate} className={primary}>Validate</button>
             </div>
@@ -223,8 +263,8 @@ export function CueCardValidatorDialog(p: Props) {
                   </span>
                 </div>
 
-                <IssueBox kind="err" groups={errGroups} total={result.totalErrors} />
-                <IssueBox kind="warn" groups={warnGroups} total={result.totalWarnings} />
+                <IssueBox kind="err" groups={errGroups} total={result.totalErrors} onJump={jumpToLine} />
+                <IssueBox kind="warn" groups={warnGroups} total={result.totalWarnings} onJump={jumpToLine} />
               </>
             )}
           </section>
