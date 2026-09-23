@@ -301,21 +301,20 @@ export function validateMarkdown(text: string): ValidationResult {
   }
 
   if (spans.length > 0) {
-    // A leading `<style>...</style>` block (the file-wide table CSS — see the SOP's "How to add
-    // tables in Markdown") belongs before the first card, not inside one. Skip it before checking
-    // for genuinely orphaned content, so following that convention isn't itself flagged as an error.
-    let i = 0;
-    while (i < spans[0].open && lines[i].trim() === "") i++;
-    if (lines[i]?.trim() === "<style>") {
-      while (i < spans[0].open && lines[i].trim() !== "</style>") i++;
-      if (lines[i]?.trim() === "</style>") i++;
-    }
-    for (; i < spans[0].open; i++) {
+    // Anything at all before the first card's opening --- — including the table-CSS <style> block
+    // — stops that --- from being recognized as a frontmatter delimiter, which silently breaks the
+    // whole first card (its title/description/duration render as plain visible text instead of
+    // being read as metadata). The <style> block belongs inside the first card's body instead — see
+    // the SOP's "How to add tables in Markdown" — never before the file's first ---.
+    for (let i = 0; i < spans[0].open; i++) {
       if (lines[i].trim() !== "") {
+        const isStyleBlock = lines[i].trim() === "<style>";
         docErrors.push({
           line: i + 1,
-          msg: "No cue card for content.",
-          hint: "Content must live inside a cue card. Wrap this in its own cue_card, or move it below one.",
+          msg: isStyleBlock ? "<style> block sits before the first card's ---." : "No cue card for content.",
+          hint: isStyleBlock
+            ? "This breaks the first card: anything before its opening --- stops that --- from being read as the metadata delimiter, so the title/description/duration render as plain text. Move the <style> block to right after the first card's own closing ---, as the first thing in its body."
+            : "Content must live inside a cue card. Wrap this in its own cue_card, or move it below one.",
         });
         break;
       }

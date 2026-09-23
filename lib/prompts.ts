@@ -46,6 +46,12 @@ export function pass2Prompt(o: { section: string; draft: string; summary?: strin
     `Separately, find every place the draft added a line, sentence, or explanation with no counterpart in ` +
     `<source_section> at all — not a reworded version of something the source said, but new content the ` +
     `source never said — and delete it; a card may end up shorter than the draft if the draft invented content. ` +
+    `Separately again, find anything the source states that the draft dropped with no trace at all — not ` +
+    `reworded, not shortened, just missing — including bracketed instructor cues like [WAIT FOR ANSWERS] or ` +
+    `[REVEAL ANSWER], stage directions, and asides; add it back word-for-word in the right place, even if it ` +
+    `doesn't match one of the SOP's named formatting categories — an unlisted cue stays in as plain text ` +
+    `rather than being silently cut. Go line by line through the source section checking each statement has a ` +
+    `counterpart in the draft; don't rely on skimming for what looks missing. ` +
     `Output only the corrected HackMD markdown, with no commentary, starting directly with the first ` +
     `card's ` + "`---`" + ` frontmatter. Do not wrap your reply in a \`\`\`markdown or \`\`\` code fence, ` +
     `even if the draft above has one — remove it. Code fences belong only inside a card, around actual code.`

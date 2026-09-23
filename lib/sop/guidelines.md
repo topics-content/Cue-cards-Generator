@@ -22,6 +22,19 @@ duplicated another rule or actively fought the CRITICAL wording-fidelity rule in
     HTML `<table>` repeated per table — expensive in output tokens and inconsistent card to card.
     Replaced with a one-time `<style>` block at the top of the file plus plain GFM tables below it,
     so styling cost is paid once per file instead of once per table.
+  - "How to add tables in Markdown" again (2026-09-23): that first version put the `<style>` block
+    before the file's first card `---`, which broke real ingestion — a real generated deck showed
+    the first card's title/description/duration rendering as plain visible text in HackMD instead
+    of being read as metadata, because anything before the opening `---` stops it being recognized
+    as a frontmatter delimiter at all. Moved the block to the first thing inside the first card's
+    body instead (still applies to every table in the file; `<style>` isn't scoped by position).
+  - "How to Write Actionables" (2026-09-23): a real deck dropped two bracketed instructor cues,
+    [WAIT FOR ANSWERS] and [REVEAL ANSWER], entirely — not reworded, just gone, including the whole
+    [REVEAL ANSWER] label even though the sentence after it survived. Neither matched a named colour
+    category here, and pass2Prompt's audit checklist in lib/prompts.ts only ever asked the model to
+    check for rewording and invention, never for content dropped with no trace — added a line saying
+    an unrecognized bracketed cue is kept as plain text, not cut, and added that third check to the
+    audit prompt itself.
 Delete this comment whenever you're happy with the result; it's here so the change is auditable.
 -->
 
@@ -130,6 +143,7 @@ Adjust the height and width of the frame as per the view and needs of the animat
 - Doubts by learners, Optional Content (if instructed by Reviewer) [Color: Orange]: `<span style="color: orange;">`
 - Question/Problem Statements (if small, highlight the complete statement), generally for Problem-Solving sessions [Color: Violet]: `<span style="color: violet;">`
 - Miscellaneous: `<span style="background-color: red">` or `<font color='green'>`
+- A bracketed instructor cue that doesn't match any category above (e.g. `[WAIT FOR ANSWERS]`, `[REVEAL ANSWER]`) is never a reason to drop it — keep it as plain bracketed text exactly as written. Not knowing which colour it deserves is not the same as it being safe to cut.
 
 ### Heading levels
 
@@ -219,7 +233,7 @@ Upload images at https://www.scaler.com/admin/add_files/public-asset. (The pipel
 
 ### How to add tables in Markdown
 
-**Style block — once per file, before any content.** If the file has one or more tables, the first thing in the file (before the first card's `---`) must be:
+**Style block — once per file, inside the first card, never before it.** If the file has one or more tables, the very first thing in the **first card's body** — immediately after that card's closing `---`, before anything else — must be:
 
 ```html
 <style>
@@ -230,7 +244,32 @@ table td:nth-child(2) { font-weight:bold; }
 </style>
 ```
 
-Insert it once for the whole file, never once per table — it styles every table below it. If the file already has this block, don't add a second one. Don't add it to a file with no tables.
+`<style>` styles the whole file no matter which card's body it sits in — but the very top of the file, before the first card's own `---`, is off limits: putting anything there (including this block) stops that opening `---` from being recognized as the card's metadata delimiter at all, so the title/description/duration lines render as plain visible text instead of being read as the card's metadata. That breaks the first card outright, which is exactly why this must go inside it instead.
+
+Worked example, showing the required placement:
+
+```markdown
+---
+title: Agenda
+description: Overview of topics covered
+duration: 180
+card_type: cue_card
+---
+
+<style>
+table { border-collapse: collapse; }
+table th, table td { border: 1px solid #94a3b8; padding: 6px 10px; }
+table th { background:#1e3a8a; color:white; }
+table td:nth-child(2) { font-weight:bold; }
+</style>
+
+## Agenda
+
+- First topic
+- Second topic
+```
+
+Insert it once for the whole file, never once per table — it styles every table below it, in this card and every later one. If the file already has this block, don't add a second one. Don't add it to a file with no tables.
 
 **Table syntax:** standard Markdown (GFM) — a header row plus a `|---|---|` separator row — never HTML `<table>` tags. Use alignment (`:---` left, `:---:` center, `---:` right) where it helps. Keep cell text short; move long explanations below the table rather than into a cell.
 

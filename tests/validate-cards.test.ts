@@ -160,10 +160,20 @@ describe("validateMarkdown", () => {
     expect(messages.some((m) => m.includes("description is empty"))).toBe(false);
   });
 
-  it("allows a leading <style> table-CSS block before the first card", () => {
+  it("flags a <style> block placed before the first card, with a message specific to why that breaks it", () => {
     const withStyle = `<style>\ntable { border-collapse: collapse; }\n</style>\n\n${CUE}`;
     const r = validateMarkdown(withStyle);
+    expect(r.docErrors.some((e) => e.msg.includes("<style> block sits before the first card"))).toBe(true);
+  });
+
+  it("allows a <style> block placed as the first thing inside the first card's body", () => {
+    const withStyle = CUE.replace(
+      "# Introduction to Arrays",
+      "<style>\ntable { border-collapse: collapse; }\n</style>\n\n# Introduction to Arrays",
+    );
+    const r = validateMarkdown(withStyle);
     expect(r.docErrors).toEqual([]);
+    expect(r.totalErrors).toBe(0);
   });
 
   it("still flags real orphaned content before the first card, style block or not", () => {
