@@ -57,6 +57,7 @@ export type DeckDetail = {
   id: string; createdBy: string; createdAt: string; program: string; module: string; className: string;
   inputType: string; status: DeckStat["status"]; budgetTier: number; source: string; output: string;
   reviewStatus: DeckStat["reviewStatus"];
+  finishedAt: string | null;
   /** `draft` is Pass 1's output (may exist even when `output`, the audited version, doesn't yet). */
   sections: { index: number; draft: string; output: string }[];
   cost: { inputTokens: number; outputTokens: number; cachedTokens: number; costUsd: number };
@@ -66,7 +67,7 @@ export async function getDeckDetail(id: string): Promise<DeckDetail | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const { data: d, error } = await db()
     .from("decks")
-    .select("id, created_by, created_at, program, module, class_name, input_type, status, budget_tier, review_status, source_md, output_md")
+    .select("id, created_by, created_at, finished_at, program, module, class_name, input_type, status, budget_tier, review_status, source_md, output_md")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -87,6 +88,7 @@ export async function getDeckDetail(id: string): Promise<DeckDetail | null> {
     id: d.id, createdBy: d.created_by, createdAt: d.created_at, program: d.program, module: d.module,
     className: d.class_name, inputType: d.input_type, status: d.status, budgetTier: d.budget_tier ?? 0,
     reviewStatus: d.review_status ?? "draft",
+    finishedAt: d.finished_at,
     source: d.source_md, output: stripOuterFence(d.output_md),
     // Defensive: covers cue cards saved before this fix. New runs are already clean at write time.
     sections: (secs ?? []).map((s) => ({

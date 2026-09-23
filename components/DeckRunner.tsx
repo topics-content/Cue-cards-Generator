@@ -23,6 +23,8 @@ type Props = {
   initialOutputs: string[];
   initialStats: Stats;
   initialReviewStatus: ReviewStatus;
+  /** Persisted created-to-finished time from a past run, shown until/unless this session runs its own (live) timer. Null if the deck has never finished. */
+  initialDurationMs: number | null;
   inrRate: number;
   budget: number;
   /** May start, resume or continue this run: its creator, or an admin. */
@@ -63,7 +65,7 @@ export function DeckRunner(p: Props) {
   const [continuing, setContinuing] = useState(false);
   const [continueError, setContinueError] = useState<string | null>(null);
   const [t0, setT0] = useState<number | null>(null);
-  const [elapsed, setElapsed] = useState<number | null>(null);
+  const [elapsed, setElapsed] = useState<number | null>(p.initialDurationMs);
 
   useEffect(() => {
     if ((phase !== "generating" && phase !== "auditing") || t0 == null) return;

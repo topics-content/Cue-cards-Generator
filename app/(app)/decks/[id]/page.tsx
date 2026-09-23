@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { DeckRunner } from "@/components/DeckRunner";
+import { durationMs } from "@/lib/admin-stats";
 import { getUser } from "@/lib/auth";
 import { splitSections } from "@/lib/chunk";
 import { budgetTiers, capAt, nextCapAfter } from "@/lib/budget";
@@ -31,6 +32,7 @@ export default async function DeckPage({ params }: { params: { id: string } }) {
       initialOutputs={outputs}
       initialStats={deck.cost}
       initialReviewStatus={deck.reviewStatus}
+      initialDurationMs={durationMs(deck)}
       inrRate={Number(process.env.INR_RATE ?? 95)}
       budget={tiers[0]}
       isOwner={deck.createdBy === user.email || user.isAdmin}

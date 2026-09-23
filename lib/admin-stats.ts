@@ -42,8 +42,8 @@ const shiftMonth = (key: string, delta: number) => {
 /** Paused at a cap right now, or was continued past one earlier. */
 export const hitCap = (r: DeckStat) => r.status === "budget_exceeded" || r.tier > 0;
 
-/** Wall-clock time from creation to the run's last terminal state — includes any budget-pause wait, not just active LLM time. Null while still generating. */
-export const durationMs = (r: DeckStat): number | null =>
+/** Wall-clock time from creation to the run's last terminal state — includes any budget-pause wait, not just active LLM time. Null while still generating. Takes just these two fields (not the full DeckStat) so it's reusable wherever a deck's timestamps are available, not only in admin-stats contexts. */
+export const durationMs = (r: { createdAt: string; finishedAt: string | null }): number | null =>
   r.finishedAt ? new Date(r.finishedAt).getTime() - new Date(r.createdAt).getTime() : null;
 
 const sum = (rows: DeckStat[]) => rows.reduce((n, r) => n + r.costUsd, 0);

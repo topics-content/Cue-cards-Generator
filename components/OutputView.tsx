@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { splitCards } from "@/lib/cards";
-import { duration, inr, tokens, usd } from "@/lib/format";
+import { inr, longDuration, tokens, usd } from "@/lib/format";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
 import { CueCardValidatorDialog } from "@/components/CueCardValidatorDialog";
 import type { ReviewStatus } from "@/lib/decks";
@@ -110,7 +110,7 @@ export function OutputView(p: Props) {
             <div className={metric}><span className={label}>Tokens in / out</span><span>{tokens(p.stats.inputTokens)} / {tokens(p.stats.outputTokens)}</span></div>
             <div className={metric}><span className={label}>Cached</span><span>{cachedPct.toFixed(0)}%</span></div>
             {p.elapsedMs != null && (
-              <div className={metric}><span className={label}>Elapsed</span><span>{duration(p.elapsedMs)}</span></div>
+              <div className={metric}><span className={label}>Time taken</span><span>{longDuration(p.elapsedMs)}</span></div>
             )}
             <div className={metric} aria-live="polite">
               <span className={label}>Cost{p.running ? " (live)" : ""}</span>
