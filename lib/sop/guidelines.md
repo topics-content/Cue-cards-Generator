@@ -131,12 +131,12 @@ Adjust the height and width of the frame as per the view and needs of the animat
 - Question/Problem Statements (if small, highlight the complete statement), generally for Problem-Solving sessions [Color: Violet]: `<span style="color: violet;">`
 - Miscellaneous: `<span style="background-color: red">` or `<font color='green'>`
 
-### Lecture Name as Heading
+### Heading levels
 
-Use H1 headers only at the beginning of the lecture. For the rest of the script, use H2.
+No lecture-title heading — cue cards start directly with the first card's metadata. Use H2 for a card's own main heading; use H3, and H4 if it's needed, for its subsections.
 
 ```
-# The Complete Architecture Flow
+## The Complete Architecture Flow
 ```
 
 ### Instructor-only headings
@@ -413,10 +413,7 @@ What are the **time and space complexities** to create reverse version of input 
 # Choices
 
 - [x] Time: O(n), Space: O(n)
-
 - [ ] Time: O(n), Space: O(1)
-
 - [ ] Time: O(1), Space: O(n)
-
 - [ ] Time: O(1), Space: O(1)
 ````

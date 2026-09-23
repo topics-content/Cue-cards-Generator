@@ -1,5 +1,3 @@
-# Data Filtering with SQL
-
 ---
 title: Agenda
 description: Agenda of this lecture
@@ -36,7 +34,7 @@ duration: 300
 card_type: cue_card
 ---
 
-### Warm-up questions
+## Warm-up questions
 **Quick recap** — 'From last class:<span style=" color: violet;"> what is the difference between LIMIT and OFFSET?</span> '
 <span style=" color: violet;">'Who ran their first query on BigQuery this week? What did you try?'</span>
 
@@ -54,16 +52,16 @@ card_type: cue_card
 ***Make them feel the problem before teaching the solution.***
 
 <span style="background-color: red; color: White;">Question to the class</span>
-**Instructor:**  Imagine you are a Zomato analyst. The orders table has 10 million rows. Your manager needs to know: how many orders failed in Bangalore, with an order value above ₹300?
-**Instructor:**  Without filtering — what do you do? Open the table, scroll through 10 million rows?
-**Learner:**  (laughter, 'that's impossible')
-**Instructor:**  Exactly. Filtering is not an optional feature. It is the entire job. Every answer an analyst gives is a filtered view of the data. WHERE is how you do it.
+> **Instructor:**  Imagine you are a Zomato analyst. The orders table has 10 million rows. Your manager needs to know: how many orders failed in Bangalore, with an order value above ₹300?
+> **Instructor:**  Without filtering — what do you do? Open the table, scroll through 10 million rows?
+> **Learner:**  (laughter, 'that's impossible')
+> **Instructor:**  Exactly. Filtering is not an optional feature. It is the entire job. Every answer an analyst gives is a filtered view of the data. WHERE is how you do it.
 
 <img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/196/796/original/Screenshot_2026-05-13_201449.png?1778683503" width="500" />
 
 Every question your manager asks has at least one condition in it. Sometimes five. Learning to translate those conditions into SQL is what separates an analyst from someone who just has data.
 
-### How every analyst question maps to a WHERE clause
+## How every analyst question maps to a WHERE clause
 * 'Failed payment orders'          →  WHERE payment_status = \'failed\'
 * 'Orders above ₹300'              →  WHERE order_value > 300
 * 'Bangalore customers'            →  WHERE city = \'Bangalore\'
@@ -90,7 +88,7 @@ card_type: cue_card
 
 <img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/197/510/original/Screenshot_2026-05-18_102755.png?1779080298" width=400>
 
-### One thing to remember about text vs numbers:
+## One thing to remember about text vs numbers:
 * Numbers: no quotes. WHERE order_value > 300
 * Text: always in single quotes. WHERE city = \'Bangalore\'
 * Common mistake: WHERE order_value > \'300\' — this compares text, not numbers. It may still run, but it gives wrong results.
@@ -117,23 +115,32 @@ When filtering text-based data, such as a city name, what is the correct syntax 
 
 
 ---
+title: Quiz 1 Explanation
+description: Explains why text values need single quotes and a single equals sign
+duration: 90
+card_type: cue_card
+---
+
+## Quiz 1 Explanation
+
+**Explanation:** In SQL, text values must always be enclosed in single quotes. Additionally, SQL uses a single = for comparison, unlike some programming languages that use ==.
+
+---
 title: WHERE Clause
 description: Discussion over WHERE Clause
 duration: 720
 card_type: cue_card
 ---
 
-**Explanation of Quiz - 1:** In SQL, text values must always be enclosed in single quotes. Additionally, SQL uses a single = for comparison, unlike some programming languages that use ==.
-
 ***The filter. Sits after 'FROM'. Only rows that pass the condition come through.***
 
 <span style="background-color: red; color: White;">Instructor Note:</span> Show this on screen: https://querycanvas-scaler-55oa.onrender.com/q/a2b4c6d8e0f13579
 
-### Business question
-**Instructor:** Show me all orders that were cancelled.
+## Business question
+> **Instructor:** Show me all orders that were cancelled.
 
-### Type this with me: Open BigQuery. Type this:
-#### Query 3.1  —  basic WHERE with text
+## Type this with me: Open BigQuery. Type this:
+### Query 3.1  —  basic WHERE with text
 ```sql=
 SELECT  order_id,
         order_status,
@@ -145,11 +152,11 @@ WHERE   order_status = 'cancelled';
 **Reads as:**  Give me order ID, status, and value — but only for rows where order_status equals 'cancelled'.
 Run it. Notice the result only shows cancelled orders. Every other status is filtered out.
 
-### Business question
-**Instructor:**  Show me all orders where the order value is above ₹500.
+## Business question
+> **Instructor:**  Show me all orders where the order value is above ₹500.
 
-### Type this with me. Now with a number condition:
-#### Query 3.2  —  WHERE with number comparison
+## Type this with me. Now with a number condition:
+### Query 3.2  —  WHERE with number comparison
 ```sql=
 SELECT  order_id,
         order_value,
@@ -160,11 +167,11 @@ WHERE   order_value > 500;
 
 **Reads as:**  Give me orders where the value is greater than 500 rupees.
 
-### Business question
-**Instructor:**  Show me orders with a rating of exactly 4.
+## Business question
+> **Instructor:**  Show me orders with a rating of exactly 4.
 
-### Type this with me. Exact match on a number:
-#### Query 3.3  —  WHERE with exact number
+## Type this with me. Exact match on a number:
+### Query 3.3  —  WHERE with exact number
 ```sql=
 SELECT  order_id,
         rating,
@@ -175,7 +182,7 @@ WHERE   rating = 4;
 
 **Reads as:**  Only show rows where the rating column is exactly 4.
 
-### WHERE clause — how it works under the hood
+## WHERE clause — how it works under the hood
 * The database reads every row in the table.
 * For each row, it checks: does this row pass the WHERE condition?
 * If yes — include it in the result.  If no — skip it.
@@ -205,13 +212,22 @@ Although we write the SELECT statement at the top of our query, in what order do
 
 
 ---
+title: Quiz 2 Explanation
+description: Explains the FROM, WHERE, SELECT execution order
+duration: 90
+card_type: cue_card
+---
+
+## Quiz 2 Explanation
+
+**Explanation:** The database first identifies the table (FROM), then applies the filters to the rows (WHERE), and finally decides which specific columns to display (SELECT).
+
+---
 title: AND, OR, NOT
 description: Discussion over AND, OR, NOT
 duration: 600
 card_type: cue_card
 ---
-
-**Explanation of Quiz - 2:** The database first identifies the table (FROM), then applies the filters to the rows (WHERE), and finally decides which specific columns to display (SELECT).
 
 ***Multiple conditions. Most real analyst questions have more than one.***
 
@@ -220,7 +236,7 @@ card_type: cue_card
 ## AND — both conditions must be true
 
 ### Business question
-**Instructor:**  Show me cancelled orders with a value above ₹500. Both conditions must be true.
+> **Instructor:**  Show me cancelled orders with a value above ₹500. Both conditions must be true.
 
 ### Type this with me. Type this:
 #### Query 4.1  —  AND
@@ -238,7 +254,7 @@ WHERE   order_status = 'cancelled'
 ## OR — at least one condition must be true
 
 ### Business question
-**Instructor:**  Show me all orders paid by UPI or by Debit Card. Either one counts.
+> **Instructor:**  Show me all orders paid by UPI or by Debit Card. Either one counts.
 
 ### Type this with me. Type this:
 #### Query 4.2  —  OR
@@ -256,7 +272,7 @@ WHERE   payment_method = 'UPI'
 ## NOT — exclude rows that match
 
 ### Business question
-**Instructor:**  Show me all orders that are NOT cancelled.
+> **Instructor:**  Show me all orders that are NOT cancelled.
 
 ### Type this with me. Two ways to write it — both correct:
 #### Query 4.3  —  NOT  (two equivalent ways)
@@ -276,7 +292,7 @@ WHERE   order_status != 'cancelled';
 
 <img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/196/802/original/Screenshot_2026-05-13_202643.png?1778684215" width="500" />
 
-### AND vs OR — the one that trips everyone
+## AND vs OR — the one that trips everyone
 * AND makes results SMALLER. Both conditions must match. Fewer rows pass.
 * OR makes results LARGER. Either condition is enough. More rows pass.
 
@@ -284,7 +300,7 @@ WHERE   order_status != 'cancelled';
 This returns ZERO rows.  A single value cannot be a UPI AND a Debit Card at the same time.
 **Correct:**  WHERE payment_method = \'UPI\' OR payment_method = \'Debit Card\'
 
-### Combining AND and OR — use brackets
+## Combining AND and OR — use brackets
 * **Without brackets:**  WHERE a = 1 OR b = 2 AND c = 3
 * **SQL** reads AND before OR  (like multiplication before addition in maths).
 * **With brackets:**  WHERE a = 1 OR (b = 2 AND c = 3)  — this is clear and correct.
@@ -299,7 +315,7 @@ duration: 45
 card_type: quiz_card
 ---
 # Question
-A junior analyst runs the query: `WHERE payment_method = 'UPI' AND payment_method = 'Debit Card'. This query returns zero rows because:
+A junior analyst runs the query: `WHERE payment_method = 'UPI' AND payment_method = 'Debit Card'`. This query returns zero rows because:
 
 # Choices
 - [ ] The database does not support both payment methods.
@@ -309,13 +325,22 @@ A junior analyst runs the query: `WHERE payment_method = 'UPI' AND payment_metho
 
 
 ---
+title: Quiz 3 Explanation
+description: Explains why OR, not AND, is needed across two payment methods
+duration: 90
+card_type: cue_card
+---
+
+## Quiz 3 Explanation
+
+**Explanation:** The AND operator requires both conditions to be true for a single record. Since an order can only have one payment method, it cannot be both 'UPI' and 'Debit Card' simultaneously; OR should be used instead.
+
+---
 title: IN  and  BETWEEN
 description: Discussion over IN  and  BETWEEN
 duration: 480
 card_type: cue_card
 ---
-
-**Explanation of Quiz - 3:** The AND operator requires both conditions to be true for a single record. Since an order can only have one payment method, it cannot be both 'UPI' and 'Debit Card' simultaneously; OR should be used instead.
 
 ***Shortcuts that replace long OR chains. Cleaner, more readable.***
 
@@ -324,9 +349,9 @@ card_type: cue_card
 ## IN — match any value in a list
 
 ### Business question
-**Instructor:**  Show me orders that are either in_transit or cancelled — not delivered. Without IN, how would you write this?
-**Learner:**  (WHERE order_status = 'in_transit' OR order_status = 'cancelled')
-**Instructor:**  Correct — but imagine 10 statuses. IN is the cleaner way.
+> **Instructor:**  Show me orders that are either in_transit or cancelled — not delivered. Without IN, how would you write this?
+> **Learner:**  (WHERE order_status = 'in_transit' OR order_status = 'cancelled')
+> **Instructor:**  Correct — but imagine 10 statuses. IN is the cleaner way.
 
 ### Type this with me. Type this:
 #### Query 5.1  —  IN
@@ -343,13 +368,13 @@ WHERE   order_status IN ('in_transit', 'cancelled');
 ## NOT IN — exclude any value in a list
 
 ### Business question
-**Instructor:**  Show me orders that are NOT in_transit or cancelled — only delivered. Without NOT IN, how would you write this?
-**Learner:**  (WHERE order_status != 'in_transit' OR order_status != 'cancelled')
-**Instructor:**  Correct — but imagine 10 statuses. NOT IN is the cleaner way.
+> **Instructor:**  Show me orders that are NOT in_transit or cancelled — only delivered. Without NOT IN, how would you write this?
+> **Learner:**  (WHERE order_status != 'in_transit' OR order_status != 'cancelled')
+> **Instructor:**  Correct — but imagine 10 statuses. NOT IN is the cleaner way.
 
 ### Type this with me  Type this:
 
-#### Query 5.1  —  IN
+#### Query 5.1b  —  NOT IN
 
 ```sql=
 SELECT  order_id,
@@ -366,7 +391,7 @@ WHERE   order_status NOT IN ('in_transit', 'cancelled');
 ## BETWEEN — match a range of values
 
 ### Business question
-**Instructor:**  Show me orders where the value is between ₹200 and ₹500.
+> **Instructor:**  Show me orders where the value is between ₹200 and ₹500.
 
 ### Type this with me. Type this:
 #### Query 5.2  —  BETWEEN
@@ -413,14 +438,14 @@ card_type: cue_card
 <span style="background-color: red; color: White;">Instructor Note:</span> Show this on screen: https://querycanvas-scaler-55oa.onrender.com/q/f1d4a7e0b3c68259
 
 <span style="background-color: red; color: White;">Question to the class</span>
-**Instructor:**  In the orders table, the rating column is NULL for some orders. What does NULL mean?
-**Learner:**  (the customer didn't rate, or zero?)
-**Instructor:**  Not zero. NULL means the value was never recorded. The customer placed the order, got it delivered, and never left a rating. That row exists — but the rating is empty. Now — how do we find all orders where no rating was given?
-**Learner:**  (WHERE rating = NULL?)
-**Instructor:**  Logical guess — but wrong. This is the biggest NULL trap in SQL. Watch.
+> **Instructor:**  In the orders table, the rating column is NULL for some orders. What does NULL mean?
+> **Learner:**  (the customer didn't rate, or zero?)
+> **Instructor:**  Not zero. NULL means the value was never recorded. The customer placed the order, got it delivered, and never left a rating. That row exists — but the rating is empty. Now — how do we find all orders where no rating was given?
+> **Learner:**  (WHERE rating = NULL?)
+> **Instructor:**  Logical guess — but wrong. This is the biggest NULL trap in SQL. Watch.
 
-### Type this with me. Try this first — the wrong way:
-#### Query 6.1  —  wrong way to check NULL  (never do this)
+## Type this with me. Try this first — the wrong way:
+### Query 6.1  —  wrong way to check NULL  (never do this)
 ```sql=
 SELECT  order_id,  rating
 FROM    zomato. orders
@@ -429,8 +454,8 @@ WHERE   rating = NULL;    -- returns 0 rows, always
 
 Run it. Zero rows. Why? Because NULL = NULL is not TRUE in SQL. NULL means unknown. An unknown value cannot be equal to anything — not even another unknown value.
 
-### Type this with me. The correct way — IS NULL:
-#### Query 6.2  —  IS NULL
+## Type this with me. The correct way — IS NULL:
+### Query 6.2  —  IS NULL
 ```sql=
 SELECT  order_id,
         order_status,
@@ -442,11 +467,11 @@ WHERE   rating IS NULL;
 **Reads as:**  Show me all orders where no rating was recorded.
 Run it. Now you see all the unrated orders.
 
-### Business question
-**Instructor:**  Show me only orders that have been rated — where a rating exists.
+## Business question
+> **Instructor:**  Show me only orders that have been rated — where a rating exists.
 
-### Type this with me. Flip it with IS NOT NULL:
-#### Query 6.3  —  IS NOT NULL
+## Type this with me. Flip it with IS NOT NULL:
+### Query 6.3  —  IS NOT NULL
 ```sql=
 SELECT  order_id,
         rating,
@@ -460,9 +485,9 @@ ORDER BY  rating  DESC;
 
 ## BLANK VALUES — empty strings are different from NULL
 <span style="background-color: red; color: White;">Question to the class</span>
-**Instructor:**  If a coupon_code column contains '' (an empty string), is that the same as NULL?
-**Learner:**  (pause for answers)
-**Instructor:**  No. NULL means the value was never recorded. A blank string means a value exists, but it is empty.
+> **Instructor:**  If a coupon_code column contains '' (an empty string), is that the same as NULL?
+> **Learner:**  (pause for answers)
+> **Instructor:**  No. NULL means the value was never recorded. A blank string means a value exists, but it is empty.
 
 ### Type this with me  filter blank values
 #### Query 6.3A  —  Filter blank values
@@ -517,7 +542,7 @@ WHERE   coupon_code IS NULL
 
 **Question:** Find all orders where the `coupon_code` is either missing (`NULL`) or entered as blank or spaces.
 
-#### Query 6.5  —  NULL VS BLANK & TRIM in single query
+### Query 6.5  —  NULL VS BLANK & TRIM in single query
 
 ```sql=
 SELECT  order_id,
@@ -561,15 +586,22 @@ If you want to find orders that have not yet been rated by a customer, which of 
 
 
 ---
+title: Quiz 4 Explanation
+description: Explains why IS NULL is the only correct check
+duration: 90
+card_type: cue_card
+---
+
+## Quiz 4 Explanation
+
+**Explanation:** In SQL, NULL represents the absence of data, and you cannot use the = operator to find it. IS NULL is the specific operator designed to identify missing or unrecorded values.
+
+---
 title: Functions - One-Minute Intro
 description: Discussion over Functions
 duration: 180
 card_type: cue_card
 ---
-
-**Explanation of Quiz - 4:** In SQL, NULL represents the absence of data, and you cannot use the = operator to find it. IS NULL is the specific operator designed to identify missing or unrecorded values.
-
-You now have the power to filter 10 million rows down to the exact ten that matter. That is 70% of the job right there! Take 5 minutes to stretch and grab a coffee. When we come back, we’re going to learn how to transform the data we found—rounding numbers, joining text, and cleaning up messy entries on the fly.
 
 ***You know how Excel has functions like =ROUND() and =UPPER()? SQL has the same, but they run on millions of rows at once.***
 
@@ -599,11 +631,11 @@ card_type: cue_card
 <span style="background-color: red; color: White;">Instructor Note:</span> Show this on screen: Only explain 0/3 simulation to the learners.
 https://querycanvas-scaler-55oa.onrender.com/q/c5a8e1b4f7d03629
 
-### Business question
-**Instructor:**  Calculate the discount percentage for each order — but round it to 1 decimal place. No one wants to read 23.876543%.
+## Business question
+> **Instructor:**  Calculate the discount percentage for each order — but round it to 1 decimal place. No one wants to read 23.876543%.
 
-### Type this with me. Type this:
-#### Query 7.1  —  ROUND
+## Type this with me. Type this:
+### Query 7.1  —  ROUND
 ```sql=
 SELECT  order_id,
         order_value,
@@ -616,8 +648,8 @@ LIMIT   10;
 
 **Reads as:**  Calculate discount as a percentage of order value, rounded to 1 decimal place — for orders where a discount was applied.
 
-### Type this with me, ROUND to 0 decimal places — whole numbers only:
-#### Query 7.2  —  ROUND to whole number
+## Type this with me, ROUND to 0 decimal places — whole numbers only:
+### Query 7.2  —  ROUND to whole number
 ```sql=
 SELECT  order_id,
         order_value,
@@ -628,7 +660,7 @@ LIMIT   10;
 
 **Reads as:**  Show order value rounded to the nearest whole rupee.
 
-### ROUND syntax
+## ROUND syntax
 * ROUND(value, decimal_places)
 * ROUND(23.876, 1)   →  23.9
 * ROUND(23.876, 0)   →  24
@@ -649,11 +681,11 @@ card_type: cue_card
 
 <span style="background-color: red; color: White;">Instructor Note:</span> Show this on screen: https://querycanvas-scaler-55oa.onrender.com/q/b1e4a7c0d3f68925
 
-### Business question
-**Instructor:**  Our reporting team wants a single column that shows 'ORD001 - delivered' for each order — the order ID followed by its status. How do we build that?
+## Business question
+> **Instructor:**  Our reporting team wants a single column that shows 'ORD001 - delivered' for each order — the order ID followed by its status. How do we build that?
 
-### Type this with me. Type this:
-#### Query 8.1  —  CONCAT two columns
+## Type this with me. Type this:
+### Query 8.1  —  CONCAT two columns
 ```sql=
 SELECT  order_id,
         order_status,
@@ -666,8 +698,8 @@ LIMIT   10;
 
 <img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/196/810/original/Screenshot_2026-05-13_204327.png?1778685223" width="500" />
 
-### Type this with me. CONCAT works with any text — mix columns and fixed strings:
-#### Query 8.2  —  CONCAT with descriptive text
+## Type this with me. CONCAT works with any text — mix columns and fixed strings:
+### Query 8.2  —  CONCAT with descriptive text
 ```sql=
 SELECT  order_id,
         order_value,
@@ -678,7 +710,7 @@ LIMIT   10;
 
 **Reads as:**  Prefix each order value with 'Order value: ₹' to make a readable label.
 
-### CONCAT rules
+## CONCAT rules
 * CONCAT(col1, separator, col2)  —  separate arguments with commas.
 * Fixed text must be in single quotes:  CONCAT(order_id, \' - \', order_status)
 * If any argument is NULL, the entire CONCAT result becomes NULL in MySQL.
@@ -700,9 +732,9 @@ card_type: cue_card
 
 ## Business question
 
-**Instructor:**  Our data has order statuses stored as 'delivered', 'Delivered', 'DELIVERED' — all three exist due to bad data entry. How do we filter consistently?
-**Learner:**  (use LOWER to normalize?)
-**Instructor:**  Exactly. Convert everything to the same case before comparing.
+> **Instructor:**  Our data has order statuses stored as 'delivered', 'Delivered', 'DELIVERED' — all three exist due to bad data entry. How do we filter consistently?
+> **Learner:**  (use LOWER to normalize?)
+> **Instructor:**  Exactly. Convert everything to the same case before comparing.
 
 ### Type this with me. Type this:
 
@@ -754,9 +786,9 @@ card_type: cue_card
 <span style="background-color: red; color: White;">Instructor Note:</span> Show this on screen: Only explain 5/6 to the learners. https://querycanvas-scaler-55oa.onrender.com/q/a2b4c6d8e0f13579
 
 <span style="background-color: red; color: White;">Question to the class</span>
-**Instructor:**  In the orders table, coupon codes include NEWUSER50, NEWUSER30, NEWUSER10 — all start with 'NEW'. How do we filter all of them at once without knowing every exact code?
-**Learner:**  (some kind of wildcard?)
-**Instructor:**  Exactly. LIKE with a wildcard. Two wildcards to know: % and _
+> **Instructor:**  In the orders table, coupon codes include NEWUSER50, NEWUSER30, NEWUSER10 — all start with 'NEW'. How do we filter all of them at once without knowing every exact code?
+> **Learner:**  (some kind of wildcard?)
+> **Instructor:**  Exactly. LIKE with a wildcard. Two wildcards to know: % and _
 
 ## The two wildcards
 * %  =  matches any sequence of characters  (including none)
@@ -873,14 +905,22 @@ Which of the following LIKE patterns would correctly filter values that start wi
 
 
 ---
+title: Quiz 5 Explanation
+description: Explains why LIKE with a leading NEW pattern is correct
+duration: 90
+card_type: cue_card
+---
+
+## Quiz 5 Explanation
+
+**Explanation:** The pattern NEW% matches any string that begins with "NEW". Since 'NEWUSER50' starts with "NEW", it is included, while 'FESTIVE50' does not start with "NEW", so it is excluded.
+
+---
 title: AI Segment, Debug My WHERE Clause
 description: Discussion over AI Segment  —  Debug My WHERE Clause
 duration: 720
 card_type: cue_card
 ---
-
-**Explanation of Quiz - 5:** The pattern NEW% matches any string that begins with "NEW". Since 'NEWUSER50' starts with "NEW", it is included, while 'FESTIVE50' does not start with "NEW", so it is excluded.
-
 
 ***Shape: learner writes a query with a deliberate mistake. AI is asked to find the bug. The class evaluates whether AI found the right issue.***
 
@@ -891,7 +931,7 @@ card_type: cue_card
 * Step 4  —  Fix the query live.  Run the corrected version.
 
 ### Step 1  —  show this buggy query on screen
-**Instructor:**  Here is a query a junior analyst wrote. Find the bug before we ask AI.
+> **Instructor:**  Here is a query a junior analyst wrote. Find the bug before we ask AI.
 
 #### Buggy query — what is wrong here?
 ```sql=
@@ -931,7 +971,7 @@ We've covered a lot of ground today—from basic filters to complex pattern matc
 
 ---
 title: Practice Preview (Before Next Class)
-description: DPractice Preview  —  Before Next Class
+description: Practice Preview  —  Before Next Class
 duration: 300
 card_type: cue_card
 ---
@@ -940,7 +980,7 @@ card_type: cue_card
 
 Beginner  —  single condition filters
 
-### Beginner practice
+## Beginner practice
 
 1.  Show all orders where payment failed.  Columns:  order_id, payment_status, order_value.
 2.  Show all customers from Delhi.  Columns:  customer_id, city, is_prime.
@@ -950,7 +990,7 @@ Beginner  —  single condition filters
 
 Intermediate  —  multiple conditions + functions
 
-### Intermediate practice
+## Intermediate practice
 
 1.  Show all UPI orders above ₹400 that were delivered.  Sort by order value, highest first.
 2.  Find all orders where a coupon starting with 'FESTIVE' was used.  Show the discount amount and order value.
@@ -972,18 +1012,18 @@ card_type: cue_card
 ---
 
 
-* <span style=“color:skyblue”>Unlock the assignment for learners</span> by clicking the **“question mark”** button on the top bar.
+* <span style="color:skyblue">Unlock the assignment for learners</span> by clicking the **"question mark"** button on the top bar.
 <img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/078/685/original/Screenshot_2024-06-19_at_7.17.12_PM.png?1718804854" width=200 />
 * If you face any difficulties using this feature, please refer to this video on how to unlock assignments.
 * <span style="color: white;background-color:red">**Note:**</span> The following video is strictly for instructor reference only. [VIDEO LINK](https://www.loom.com/share/15672134598f4b4c93475beda227fb3d?sid=4fb31191-ae8c-4b18-bf81-468d2ffd9bd4)</span>
-### Conducting a Live Assignment Solution Session:
+## Conducting a Live Assignment Solution Session:
 1. Once you unlock the assignments, ask if anyone in the class would like to solve a question live by sharing their screen.
-2. Select a learner and grant permission by navigating to <span style=“color:skyblue”>**Settings > Admin > Unmuted Audience Can Share**, then select **Audio, Video, and Screen**.</span>
+2. Select a learner and grant permission by navigating to <span style="color:skyblue">**Settings > Admin > Unmuted Audience Can Share**, then select **Audio, Video, and Screen**.</span>
 <img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/111/113/original/image.png?1740484517" width=400 />
 3. Allow the selected learner to share their screen and guide them through solving the question live.
 4. Engage with both the learner sharing the screen and other students in the class to foster an interactive learning experience. 
 
-### <span style="color: violet;">Practice Question</span>
+## <span style="color: purple;">Practice Question</span>
 
 You can pick the following question and solve it during the lecture itself.
 

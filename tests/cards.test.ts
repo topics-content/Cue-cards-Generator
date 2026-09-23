@@ -35,7 +35,7 @@ describe("splitCards", () => {
 
   it("finds every card in the real golden examples", () => {
     for (const [file, cue, quiz] of [
-      ["prose-cards", 16, 5],
+      ["prose-cards", 21, 5],
       ["notebook-cards", 21, 5],
     ] as const) {
       const cards = splitCards(readFileSync(`lib/sop/examples/${file}.md`, "utf8"));

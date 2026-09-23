@@ -5,7 +5,7 @@ duration: 180
 card_type: cue_card
 ---
 
-### <span style="background-color: red;">Agenda ( for instructor only) </span>
+## <span style="background-color: red;">Agenda ( for instructor only) </span>
 
 - Understand why a single-output classifier is not enough when there are more than two categories to choose from
 - Learn the notation used to describe a small neural network: inputs, weights, bias, neurons, and outputs
@@ -107,7 +107,7 @@ duration: 120
 card_type: cue_card
 ---
 
-# Quiz 1 Explanation
+## Quiz 1 Explanation
 
 **Explanation:** Each of the 2 features connects to each of the 3 neurons, giving $2 \times 3 = 6$ weights: $w_{11}, w_{12}, w_{13}, w_{21}, w_{22}, w_{23}$. Each neuron additionally has its own bias, but the question only asked about weights.
 
@@ -160,7 +160,7 @@ duration: 180
 card_type: cue_card
 ---
 
-# Quiz 2 Explanation
+## Quiz 2 Explanation
 
 **Explanation:** Matrix multiplication of an (m × d) matrix with a (d × n) matrix produces an (m × n) matrix. Here, m = 12 items and n = 3 neurons, so Z has shape 12 × 3: one raw score per item for each of the 3 bins. Adding the bias b does not change this shape, since it is broadcast across all 12 rows.
 
@@ -225,7 +225,7 @@ duration: 90
 card_type: cue_card
 ---
 
-# Quiz 3 Explanation
+## Quiz 3 Explanation
 
 **Explanation:** Softmax is a monotonic function of the raw scores: the larger the input z, the larger the resulting probability. Since z_Paper = 2 is the largest of the three scores, Paper receives the largest probability once the scores are exponentiated and normalized, even without computing the exact numbers.
 
@@ -236,7 +236,7 @@ duration: 420
 card_type: cue_card
 ---
 
-### Interactive playground
+## Interactive playground
 
 Visualise how softmax redistributes confidence.
 
@@ -296,7 +296,7 @@ duration: 180
 card_type: cue_card
 ---
 
-# Ask AI Softmax and Boltzmann Distribution
+## Ask AI Softmax and Boltzmann Distribution
 
 **Ask AI:** Ask an AI assistant to explain the connection between the softmax function and the Boltzmann distribution used in statistical physics to describe the probability of a system occupying different energy states. Write down, in your own words, what the raw score z corresponds to in that physical analogy.
 
@@ -378,7 +378,7 @@ duration: 120
 card_type: cue_card
 ---
 
-# Quiz 4 Explanation
+## Quiz 4 Explanation
 
 **Explanation:** Because of one-hot encoding, every term in the sum is multiplied by either 0 or 1. Only the term for the true class, Plastic, survives, since `y_Plastic = 1` and the other `y` values are 0. So the loss is simply `-log(p_Plastic) = -log(0.5)`.
 
@@ -408,7 +408,7 @@ duration: 180
 card_type: cue_card
 ---
 
-# Ask AI: Deriving $\dfrac{\partial J}{\partial z}$ for Softmax and Cross-Entropy
+## Ask AI: Vocabulary-Sized Softmax in Language Models
 
 **Ask AI:** Ask an AI assistant to compare the three-class softmax we used for GreenSort to the vocabulary-sized softmax used at the output of a language model. Specifically, ask how the computation cost changes as the number of classes grows from 3 to over 100,000, and why techniques such as hierarchical softmax or sampling-based losses were developed to address that cost.
 
@@ -442,7 +442,7 @@ duration: 240
 card_type: cue_card
 ---
 
-### Forward Propagation, Revisited
+## Forward Propagation, Revisited
 
 For a batch of items on the belt, forward propagation for GreenSort is simply:
 
@@ -465,7 +465,7 @@ duration: 600
 card_type: cue_card
 ---
 
-### Backward Propagation: Assigning Blame
+## Backward Propagation: Assigning Blame
 
 <span style="color: violet;">Question: How did we reduce the loss in Logistic Regression?</span>
 
@@ -506,7 +506,7 @@ duration: 90
 card_type: cue_card
 ---
 
-# Quiz 5 Explanation
+## Quiz 5 Explanation
 
 **Correct Answer: B. How J changes with respect to P, i.e. dJ/dP**
 
@@ -519,7 +519,7 @@ duration: 150
 card_type: cue_card
 ---
 
-# Ask AI: Deriving $\dfrac{\partial J}{\partial z}$ for Softmax and Cross-Entropy
+## Ask AI: Deriving $\dfrac{\partial J}{\partial z}$ for Softmax and Cross-Entropy
 
 **Ask AI:** Ask an AI assistant to derive $\dfrac{\partial J}{\partial z}$ in full for the specific combination of softmax and Categorical Cross-Entropy, and to confirm that it simplifies neatly to $p - y$. Compare that clean, worked-out derivation with the conceptual, link-by-link chain rule explanation from this class, and note down any step you find surprising.
 
@@ -530,7 +530,7 @@ duration: 480
 card_type: cue_card
 ---
 
-### Interactive playground
+## Interactive playground
 Visualise Forward and backward propagation
 <span style="background-color: red;color: White;">**[Instructor Note]:**</span> 
 * Link to Animation : [Click here](https://shrijankumar1-maker.github.io/NN-visualiser/)
