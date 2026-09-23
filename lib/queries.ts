@@ -17,7 +17,7 @@ async function fetchAll<T>(build: (from: number, to: number) => PromiseLike<{ da
 
 type DeckMeta = {
   id: string; program: string; module: string; module_normalized: string; class_name: string;
-  created_by: string; created_at: string; status: DeckStat["status"]; budget_tier: number;
+  created_by: string; created_at: string; finished_at: string | null; status: DeckStat["status"]; budget_tier: number;
   review_status: "draft" | "completed";
 };
 type CostRow = {
@@ -30,7 +30,7 @@ export async function deckStats(owner?: string): Promise<DeckStat[]> {
   const decks = await fetchAll<DeckMeta>((from, to) => {
     let q = db()
       .from("decks")
-      .select("id, program, module, module_normalized, class_name, created_by, created_at, status, budget_tier, review_status")
+      .select("id, program, module, module_normalized, class_name, created_by, created_at, finished_at, status, budget_tier, review_status")
       .order("created_at", { ascending: false })
       .range(from, to);
     if (owner) q = q.eq("created_by", owner);
@@ -44,7 +44,7 @@ export async function deckStats(owner?: string): Promise<DeckStat[]> {
     const c = costs.get(d.id);
     return {
       id: d.id, program: d.program, module: d.module, moduleNormalized: d.module_normalized,
-      className: d.class_name, createdBy: d.created_by, createdAt: d.created_at, status: d.status, tier: d.budget_tier ?? 0,
+      className: d.class_name, createdBy: d.created_by, createdAt: d.created_at, finishedAt: d.finished_at, status: d.status, tier: d.budget_tier ?? 0,
       reviewStatus: d.review_status ?? "draft",
       inputTokens: Number(c?.input_tokens ?? 0), outputTokens: Number(c?.output_tokens ?? 0),
       cachedTokens: Number(c?.cached_tokens ?? 0), cachedPct: Number(c?.cached_pct ?? 0),

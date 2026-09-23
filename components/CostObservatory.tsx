@@ -7,10 +7,10 @@ import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
-  budgetUsed, byProgram, filterRows, kpis, monthlySeries, moduleTree, sortRows, toCsv, totals,
+  budgetUsed, byProgram, durationMs, filterRows, kpis, monthlySeries, moduleTree, sortRows, toCsv, totals,
   type DeckStat, type Filters, type SortKey, type UserInfo,
 } from "@/lib/admin-stats";
-import { inr, tokens, usd } from "@/lib/format";
+import { inr, longDuration, tokens, usd } from "@/lib/format";
 import { StatusPill } from "@/components/StatusPill";
 import { UserCosts } from "@/components/UserCosts";
 
@@ -83,6 +83,7 @@ const COLS: { key: SortKey; label: string; right?: boolean }[] = [
   { key: "className", label: "Class Name" },
   { key: "createdBy", label: "Created by" },
   { key: "createdAt", label: "Date" },
+  { key: "duration", label: "Time taken", right: true },
   { key: "tokens", label: "Tokens in/out", right: true },
   { key: "cachedPct", label: "Cached %", right: true },
   { key: "costUsd", label: "Cost USD", right: true },
@@ -338,7 +339,7 @@ export function CostObservatory() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 && <tr><td colSpan={11} className="px-4 py-10 text-center text-muted">No cue cards match these filters.</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={12} className="px-4 py-10 text-center text-muted">No cue cards match these filters.</td></tr>}
               {filtered.map((d) => (
                 <Fragment key={d.id}>
                   <tr className="cursor-pointer border-b border-line hover:bg-background" onClick={() => toggle(d.id)} aria-expanded={open === d.id}>
@@ -350,6 +351,7 @@ export function CostObservatory() {
                     </td>
                     <td className="px-4 py-2 text-muted">{d.createdBy}</td>
                     <td className="whitespace-nowrap px-4 py-2 text-muted">{new Date(d.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })}</td>
+                    <td className="px-4 py-2 text-right tabular-nums text-muted">{durationMs(d) != null ? longDuration(durationMs(d)!) : "—"}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{tokens(d.inputTokens)} / {tokens(d.outputTokens)}</td>
                     <td className="px-4 py-2 text-right tabular-nums">{d.cachedPct.toFixed(0)}%</td>
                     <td className="px-4 py-2 text-right tabular-nums">{usd(d.costUsd)}</td>
@@ -359,7 +361,7 @@ export function CostObservatory() {
                   </tr>
                   {open === d.id && (
                     <tr className="border-b border-line bg-background">
-                      <td colSpan={11} className="px-6 py-4">
+                      <td colSpan={12} className="px-6 py-4">
                         {gens[d.id] === "loading" && <p className="flex items-center gap-2 text-muted" role="status"><Spinner /> Loading breakdown…</p>}
                         {gens[d.id] === "error" && <p className="text-danger">Could not load the breakdown.</p>}
                         {Array.isArray(gens[d.id]) && (

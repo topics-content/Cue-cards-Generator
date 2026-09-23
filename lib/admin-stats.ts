@@ -9,6 +9,8 @@ export type DeckStat = {
   className: string;
   createdBy: string;
   createdAt: string; // ISO
+  /** When the run last reached a terminal state (done/failed/budget_exceeded). Null while still generating. */
+  finishedAt: string | null;
   status: "pending" | "done" | "failed" | "budget_exceeded";
   /** Has a person run the (LLM-free) cue card validator against this deck's output and confirmed it's clean. */
   reviewStatus: "draft" | "completed";
@@ -39,6 +41,10 @@ const shiftMonth = (key: string, delta: number) => {
 
 /** Paused at a cap right now, or was continued past one earlier. */
 export const hitCap = (r: DeckStat) => r.status === "budget_exceeded" || r.tier > 0;
+
+/** Wall-clock time from creation to the run's last terminal state — includes any budget-pause wait, not just active LLM time. Null while still generating. */
+export const durationMs = (r: DeckStat): number | null =>
+  r.finishedAt ? new Date(r.finishedAt).getTime() - new Date(r.createdAt).getTime() : null;
 
 const sum = (rows: DeckStat[]) => rows.reduce((n, r) => n + r.costUsd, 0);
 
@@ -144,13 +150,15 @@ export function filterRows(rows: DeckStat[], f: Filters): DeckStat[] {
 
 export type SortKey =
   | "program" | "module" | "className" | "createdBy" | "createdAt"
-  | "tokens" | "cachedPct" | "costUsd" | "budget";
+  | "tokens" | "cachedPct" | "costUsd" | "budget" | "duration";
 
 export function sortRows(rows: DeckStat[], key: SortKey, dir: "asc" | "desc"): DeckStat[] {
   const val = (r: DeckStat): string | number => {
     switch (key) {
       case "tokens": return r.inputTokens + r.outputTokens;
       case "budget": return r.costUsd;
+      // Still-running decks (no finishedAt) sort as if instant, rather than breaking the sort.
+      case "duration": return durationMs(r) ?? 0;
       default: return r[key];
     }
   };
@@ -189,14 +197,16 @@ const csvCell = (v: string | number) => {
 };
 
 export function toCsv(rows: DeckStat[], inrRate: number, budget: number): string {
-  const head = ["Program","Module","Class Name","Created by","Date (IST)","Status","Tokens in","Tokens out","Cached %","Cost USD","Cost INR","Budget used %"];
-  const lines = rows.map((r) =>
-    [
+  const head = ["Program","Module","Class Name","Created by","Date (IST)","Status","Tokens in","Tokens out","Cached %","Cost USD","Cost INR","Budget used %","Time taken (min)"];
+  const lines = rows.map((r) => {
+    const ms = durationMs(r);
+    return [
       r.program, r.module, r.className, r.createdBy, dayKey(r.createdAt), r.status,
       r.inputTokens, r.outputTokens, r.cachedPct.toFixed(1),
       r.costUsd.toFixed(6), (r.costUsd * inrRate).toFixed(2), budgetUsed(r, budget).pct.toFixed(1),
-    ].map(csvCell).join(","),
-  );
+      ms == null ? "" : (ms / 60_000).toFixed(1),
+    ].map(csvCell).join(",");
+  });
   return [head.join(","), ...lines].join("\n") + "\n";
 }
 

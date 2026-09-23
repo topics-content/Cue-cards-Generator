@@ -7,7 +7,7 @@ import {
 let n = 0;
 const deck = (o: Partial<DeckStat> = {}): DeckStat => ({
   id: String(++n), program: "DSML", module: "SQL", moduleNormalized: "sql", className: "Class " + n,
-  createdBy: "a@scaler.com", createdAt: "2026-09-10T10:00:00Z", status: "done", reviewStatus: "draft", tier: 0,
+  createdBy: "a@scaler.com", createdAt: "2026-09-10T10:00:00Z", finishedAt: "2026-09-10T10:05:00Z", status: "done", reviewStatus: "draft", tier: 0,
   inputTokens: 1000, outputTokens: 500, cachedTokens: 800, cachedPct: 80, costUsd: 0.5, ...o,
 });
 const NOW = new Date("2026-09-21T12:00:00Z");

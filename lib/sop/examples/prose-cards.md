@@ -7,7 +7,7 @@ duration: 600
 card_type: cue_card
 ---
 
-## Agenda
+## <span style="background-color: red;">Agenda (for instructor only)</span>
 
 * Filtering
     * Instructor warm-up

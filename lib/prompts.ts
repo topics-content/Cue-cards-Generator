@@ -43,6 +43,9 @@ export function pass2Prompt(o: { section: string; draft: string; summary?: strin
     `Audit the draft against every rule in the SOP, checking it against the source section. ` +
     `In particular, find every place the draft reworded, paraphrased, shortened, or changed the meaning of ` +
     `something the source said, and restore the source's exact wording there — keep only structural formatting. ` +
+    `Separately, find every place the draft added a line, sentence, or explanation with no counterpart in ` +
+    `<source_section> at all — not a reworded version of something the source said, but new content the ` +
+    `source never said — and delete it; a card may end up shorter than the draft if the draft invented content. ` +
     `Output only the corrected HackMD markdown, with no commentary, starting directly with the first ` +
     `card's ` + "`---`" + ` frontmatter. Do not wrap your reply in a \`\`\`markdown or \`\`\` code fence, ` +
     `even if the draft above has one — remove it. Code fences belong only inside a card, around actual code.`

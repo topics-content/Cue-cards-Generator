@@ -237,7 +237,12 @@ export async function finalizeDeck(deckId: string, status: DeckRow["status"]) {
   if (error) throw error;
   const output = data.map((r) => r.output_md.trim()).join("\n\n");
   // Any reservation left over (e.g. a call that never got to release, on a crash) can't outlive the run.
-  const { error: e2 } = await db().from("decks").update({ output_md: output, status, reserved_usd: 0 }).eq("id", deckId);
+  // finished_at is overwritten on every call, including a later resume's completion — it tracks
+  // "when this run last stopped", which is what "time taken" on the observatory table means.
+  const { error: e2 } = await db()
+    .from("decks")
+    .update({ output_md: output, status, reserved_usd: 0, finished_at: new Date().toISOString() })
+    .eq("id", deckId);
   if (e2) throw e2;
   return output;
 }
