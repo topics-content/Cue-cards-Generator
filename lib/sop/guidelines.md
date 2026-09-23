@@ -1,0 +1,422 @@
+<!--
+Trimmed for the automated pipeline on 2026-09-22, at your request, to remove lines that either
+duplicated another rule or actively fought the CRITICAL wording-fidelity rule in lib/prompts.ts
+("carry over the script's wording; only restructure, never reword"). Removed or changed:
+  - "Sample Script" section: three onboarding links the model can't open. Non-actionable, dropped.
+  - "Objectives" section: described the SCRIPT a human writer produces from a recording
+    ("conversational format", "grammatically sound") — this pipeline never writes a script, it
+    only reformats one that already exists, so this was pushing the model to rewrite wording.
+  - "Write Short Sentences ... retaining their original meaning": shortening a sentence and
+    keeping it word-for-word are mutually exclusive. Direct conflict, removed.
+  - "check with Grammarly before submitting for review": a step for a human writer, not the model.
+  - Image bullets (diagrams, "use images for LaTeX", the Scaler Admin upload link): the model
+    never has a real image to upload — notebook images arrive as `![plot-N](image-placeholder)`
+    and nothing else. Left as instructions, the model could invent a fake image link. Replaced
+    with a note to keep the placeholder as-is.
+  - The colour-coding guide link: non-actionable; the actual colours are already listed below it.
+  - "reference recording" wherever the model only ever sees a script: reworded to "script".
+  - Title-character rule was stated twice; kept one copy, and folded in that a single hyphen used
+    as a separator is fine (your own golden examples use it — "Opening Hook - 10 Million Rows").
+  - "How to add tables in Markdown" (2026-09-22, at your request): the old rule ("HTML Format
+    Table ... headers as Bold", no worked example) pushed the model toward a full inline-styled
+    HTML `<table>` repeated per table — expensive in output tokens and inconsistent card to card.
+    Replaced with a one-time `<style>` block at the top of the file plus plain GFM tables below it,
+    so styling cost is paid once per file instead of once per table.
+Delete this comment whenever you're happy with the result; it's here so the change is auditable.
+-->
+
+Lecture Script Technical Content Writing Guidelines
+aka Cue Card Creation Guidelines.
+
+Welcome to Scaler's Content team. As a member of this team, your key responsibility will be to standardize the class content.
+
+## What's a cue card
+
+A cue card is a small card or note that contains key points or prompts to help someone remember what to say during a speech, presentation, or performance.
+
+Cue cards should use consistent examples, analogies, and flow of topics, so instructors deliver a similar learning experience regardless of who is teaching the class.
+
+So a alot of such cards are combined and then a lectures complete cue card is created
+
+## Writing Guidelines
+
+### Content
+
+- Use Pseudocode: For DSA topics, use pseudocode. For other topics, follow the language used in the script.
+- Don't use screenshots/images for code.
+- Use Punctuation Correctly: Correct punctuation usage ensures that the content flows well and is easy to read.
+- Structuring: Ensure the content is well-structured with proper headings and subheadings.
+- Use `>` as a block wherever adding a Scenario or Action for Instructor.
+- When adding "Note for instructor" or "Ask Learners" as a prompt, try to bullet point the statements under it.
+
+### Formatting
+
+- Don't Skip Any Part of the Session: 100% coverage of the source script is important unless mentioned by the module owner. This includes hints/doubts/stories/comparisons and observations that are crucial for the understanding of the topic.
+- Highlight Important Points/Words: Use bold or italic formatting to emphasize important points or words.
+- Bullets Over Paragraphs: Where possible, use bullet points instead of long paragraphs to make the content more digestible.
+- Images: a script image becomes `![plot-N](image-placeholder)`. Keep that placeholder exactly as given — there is no real image to link to, so never invent an image URL or an `<img>` tag.
+
+## Example Content
+
+### Good Example
+
+````markdown
+# Introduction
+
+The prefix sum is a common concept in data structure and algorithm. It's a method where an array is modified such that each element at a given index 'i' in the output array is the sum of array elements from index '0' through 'i' in the input array.
+
+[Note to instructor]
+Mention Importance of Prefix sum and Draw cases of each on white board to explain them
+
+# Importance of Prefix Sum
+
+- Prefix sum can help solve many problems efficiently, particularly those that require cumulative summations.
+- This method often improves the time complexity of algorithms, making them more efficient.
+
+# Key Points
+
+- Prefix sum array is also known as a cumulative array.
+- It's a quick way to calculate cumulative sums of arrays, which can be utilized in multiple problem-solving contexts.
+
+# Steps to Calculate Prefix Sum
+
+- Step 1: Initialize the first element of the prefix sum array with the first element of the original array.
+- Step 2: Add the current element in the original array to the previous element in the prefix sum array. Store this in the current index of the prefix sum array.
+- Step 3: Repeat Step 2 for all elements in the original array.
+````
+
+### Bad Example
+
+So, we have a thing called Prefix Sum, in the field of data structures and algorithms, it is a method that modifies an array so that the element at each index 'i' in the new array is the sum of the elements from '0' to 'i' in the old array.
+The Prefix Sum concept is really important because it can solve many problems more efficiently, especially the ones that need to get cumulative sums. It can help us make algorithms run faster, which is always good.
+There are things you should remember about Prefix Sum: firstly, it is also called a cumulative array; secondly, it's a quick way to get cumulative sums of arrays which is useful for a lot of problems.
+Calculating Prefix Sum goes like this: firstly, we take the first element of the old array and put it as the first element of the new array; secondly, we take the current element in the old array and add it to the last element in the new array, then put this sum in the new array; thirdly, we do the second step again and again for all the elements.
+Understanding the prefix sum will help you design better algorithms, so try using it in different problems to get good at it.
+
+Note for Writers:
+
+The "Bad Example" is not well-structured and uses casual language that could lead to confusion.
+The "Good Example," on the other hand, clearly structures the information with bullet points and subheadings, uses formal and precise language, and clearly highlights key points. It also has prompts for instructors.
+
+## Code blocks
+
+For a code block, we need to follow this format:
+
+````markdown
+```language_name=
+
+```
+````
+
+Example:
+
+````markdown
+```sql=
+
+```
+````
+
+## How to Add Animations
+
+```html
+<iframe src="Link of Hosted Animations" width="100%" height="700" style="border:1px solid #ccc; border-radius:8px;"></iframe>
+```
+
+Adjust the height and width of the frame as per the view and needs of the animations.
+
+## How to Write Actionables
+
+- Note for Instructor / Ask Learners / Any Mandatory Note or Important Note [Color: Red]: `<span style="background-color: red;">`
+- Doubts by learners, Optional Content (if instructed by Reviewer) [Color: Orange]: `<span style="color: orange;">`
+- Question/Problem Statements (if small, highlight the complete statement), generally for Problem-Solving sessions [Color: Violet]: `<span style="color: violet;">`
+- Miscellaneous: `<span style="background-color: red">` or `<font color='green'>`
+
+### Lecture Name as Heading
+
+Use H1 headers only at the beginning of the lecture. For the rest of the script, use H2.
+
+```
+# The Complete Architecture Flow
+```
+
+### Instructor-only headings
+
+Headings should be plain, without any colour:
+
+```
+## The Complete Architecture Flow
+```
+
+Any optional heading can be labelled in orange:
+
+`<span style="color: orange;">(optional)</span>`
+
+### Actionable examples
+
+```
+<span style="color: orange;">Doubt by Learner:</span>
+* Demo
+* Demo
+```
+
+```
+<span style="color: orange;">Doubt by Learner (Optional):</span>
+* Demo
+* Demo
+```
+
+```
+<span style="color: red;">Disclaimer:</span>
+* Demo
+* Demo
+```
+
+```
+<span style="color: red;">Important:</span>
+* Demo
+* Demo
+```
+
+```
+<span style="color: red;">Note:</span>
+* Demo
+* Demo
+```
+
+```
+<span style="background-color: red;color: White;">Instructor Note:</span>
+
+<span style="background-color: red;color: White;">**[Ask Learners]:**</span>
+```
+
+### Steps, in green
+
+```
+### Steps to use green color
+* <span style="color: green;">Step 1</span>
+* <span style="color: green;">Step 2</span>
+```
+
+### Question, in violet
+
+The complete question should be in violet, on just the question heading:
+
+`<span style="color: violet;">Question: ...</span>`
+
+### Dataset link
+
+`<span style="background-color: Blue;color:White;">Dataset link</span>`
+
+### Uploading images
+
+Upload images at https://www.scaler.com/admin/add_files/public-asset. (The pipeline itself never uploads an image on your behalf — a notebook's own plots always arrive as `![plot-N](image-placeholder)` and that placeholder must be kept exactly as given, never replaced with an invented link.)
+
+### How to add images in Markdown
+
+**Good practice** — an `<img>` tag with a width set:
+
+`<img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/043/265/original/Screenshot_2023-08-18_at_4.18.55_PM.png?1692355744" width="500" />`
+
+### How to add tables in Markdown
+
+**Style block — once per file, before any content.** If the file has one or more tables, the first thing in the file (before the first card's `---`) must be:
+
+```html
+<style>
+table { border-collapse: collapse; }
+table th, table td { border: 1px solid #94a3b8; padding: 6px 10px; }
+table th { background:#1e3a8a; color:white; }
+table td:nth-child(2) { font-weight:bold; }
+</style>
+```
+
+Insert it once for the whole file, never once per table — it styles every table below it. If the file already has this block, don't add a second one. Don't add it to a file with no tables.
+
+**Table syntax:** standard Markdown (GFM) — a header row plus a `|---|---|` separator row — never HTML `<table>` tags. Use alignment (`:---` left, `:---:` center, `---:` right) where it helps. Keep cell text short; move long explanations below the table rather than into a cell.
+
+```
+| user_id | name | phone | age |
+| --- | --- | --- | --- |
+| 1 | Akon | 9876723452 | 35 |
+| 2 | Bkon | 9991165674 | 35 |
+```
+
+**Cell-level styling:** for coloured text inside a cell, use an inline span — `<span style="color:green">Hands-on</span>`. Use colour meaningfully and consistently: green = done/hands-on, red = blocked/failed, orange = partial. Don't add other inline styles, and don't change the style block's values, unless explicitly asked.
+
+### Quiz cards: no extra text
+
+---
+title: Quiz 1
+description: Optional description
+duration: 120
+card_type: quiz_card
+---
+
+# Question
+
+Which of the following is correct
+
+# Choices
+
+- [ ] option 1
+- [x] option 2
+- [ ] option 3
+````
+
+There should not be any explanation or text inside a quiz cue card — only the question and choices.
+
+### Don't leave content without a parent cue card
+
+The text or content that sits between two cue cards, outside any `---` block, is shown to the instructor only. Make sure every piece of content lives inside a cue card — content with no parent cue card gets missed entirely.
+
+### Code format
+
+
+## SQL code
+```sql=
+write the query
+here
+```
+
+## Python code
+```python=
+write the code
+here
+```
+
+### DSML – DA track modules only
+
+The following applies specifically to DSML DA-track modules. Reuse it as a template; only the practice-question link changes between lectures.
+
+
+---
+title: Unlock Assignment & ask learner to solve in live class
+description:
+duration: 1800
+card_type: cue_card
+---
+
+* <span style="color:skyblue">Unlock the assignment for learners</span> by clicking the **"question mark"** button on the top bar.
+<img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/078/685/original/Screenshot_2024-06-19_at_7.17.12_PM.png?1718804854" width=200 />
+* If you face any difficulties using this feature, please refer to this video on how to unlock assignments.
+* <span style="color:red">**Note:** The following video is strictly for instructor reference only. [VIDEO LINK](https://www.loom.com/share/15672134598f4b4c93475beda227fb3d?sid=4fb31191-ae8c-4b18-bf81-468d2ffd9bd4)</span>
+
+### Conducting a Live Assignment Solution Session:
+1. Once you unlock the assignments, ask if anyone in the class would like to solve a question live by sharing their screen.
+2. Select a learner and grant permission by navigating to <span style="color:skyblue">**Settings > Admin > Unmuted Audience Can Share**, then select **Audio, Video, and Screen**.</span>
+<img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/111/113/original/image.png?1740484517" width=400 />
+3. Allow the selected learner to share their screen and guide them through solving the question live.
+4. Engage with both the learner sharing the screen and other students in the class to foster an interactive learning experience.
+
+### <span style="color: purple;">Practice Question</span>
+
+You can pick the following question and solve it during the lecture itself.
+
+This will help the learners to get familiar with the problem solving process and motivate them to solve the assignments.
+
+<span style="background-color: red">**Make sure to start the doubt session before you start solving the question.**</span>
+
+> Q. https://www.scaler.com/hire/test/problem/54464/ (Where !=): Emp 101 - Easy
+````
+
+Only this last question link changes from one lecture to another; everything else in the block above stays the same.
+
+### DSML – SQL module only
+
+The following applies specifically to the DSML SQL module.
+
+````markdown
+<span style="background-color: red">**Disclaimer:**</span> <span style="color:orange;">The text in orange</span>
+
+## <font color='violet'>**Dialogue Template Starts:**</font>
+
+**Instructor**:
+**Learner**:
+**Instructor**:
+
+## <font color='violet'>**Dialogue Template Ends**</font>
+
+<span style="background-color: red">**Instructor Note:**</span> <span style="color:orange;">The text in orange</span>
+
+### <font color='green'>Formulating questions to be explored based on the data provided:</font>
+````
+
+## How to Format the Cue Card Content
+
+The script content will be formatted using markdown and divided into two sections:
+
+1. Meta Data Section: This will contain metadata related to the card, like the type of card, title, duration, etc.
+2. Main Content Section: This will be the markdown content specific to the type of card.
+
+### Cue Card Format
+
+The markdown file for a single cue card should follow the format below.
+The content between `---` is the metadata, which includes the following 4 attributes. Please note that new lines should not be added in attribute values:
+
+- title: The title of the section to be shown on the cards. The title should be descriptive, like chapter names on YouTube, and not generic.
+  - Good Example: "Problem - Longest Common Subsequence"
+  - Bad Example: "Problem 1 - Optimized Solution"
+- description: Any optional description you would want to show on the cards. This can be different from the content, as content will only be visible when the cue card is opened, and this will be visible always.
+- duration (in seconds): The ideal estimated duration that the instructor should take to cover this content. As of now, this will be used only for analytical purposes, but later could be used to provide a nudge to the instructor if the need arises.
+- card_type: This will be fixed to the value `cue_card` for all cue cards. This will help the script identify that this markdown file is for a cue card.
+
+Keep the format the same as shared below:
+
+- The title should never contain a colon or other special characters, not even a full stop (.). A single hyphen used as a separator (e.g. "Opening Hook - 10 Million Rows") is fine.
+- Don't add a space before `:` but add one after it
+- Always add a value for duration
+
+Example:
+
+````markdown
+---
+title: Introduction to Arrays
+description: Optional description for introduction to arrays slide visible on card
+duration: 300
+card_type: cue_card
+---
+
+# Introduction to Arrays
+
+Take this time to highlight all the topics that will be covered in the class as per the below list
+- How are arrays stored
+- How to read a value from an array
+- How to read all values from an array
+- How to write to an array
+- Time complexities for different operations in arrays
+````
+
+### Quiz Card Format
+
+The markdown file for a quiz card should follow the format below.
+
+The content between `---` is the metadata, with the format being the same as the cue card except for the `card_type` value, which should be `quiz_card`.
+To specify the content of the quiz question, add a markdown heading `# Question`. The question content will be added below this heading in markdown format and can span multiple lines.
+To specify choices for the quiz, add a markdown heading `# Choices`. Choices will be added below this heading as a checklist.
+The correct answer should be specified by marking the checklist with `x` to indicate it is correct (note that capital X will throw an error here). If multiple lines are required in the choice, please use the `<br>` tag, and there should be at least 2 choices and exactly one choice marked as the correct answer.
+
+Example:
+
+````markdown
+---
+title: Quiz-2
+description: Optional description
+duration: 45
+card_type: quiz_card
+---
+
+# Question
+
+What are the **time and space complexities** to create reverse version of input array?
+
+
+# Choices
+
+- [x] Time: O(n), Space: O(n)
+
+- [ ] Time: O(n), Space: O(1)
+
+- [ ] Time: O(1), Space: O(n)
+
+- [ ] Time: O(1), Space: O(1)
+````
