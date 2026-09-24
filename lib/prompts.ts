@@ -9,8 +9,22 @@ const FIDELITY_RULE = `CRITICAL — do not reword the script:
 - The only changes allowed are structural: splitting the text into cue cards, adding headings/bullets/frontmatter/actionable formatting per the SOP, and fixing an isolated spelling typo without rephrasing the sentence it's in.
 - If a sentence could be kept as-is or improved, keep it as-is.`;
 
+// Which module a deck belongs to is decided by the person creating it, on the form, before
+// generation ever starts — never guessed from the script. Without this, the model would have to
+// infer from the script's own wording whether a SOP module-specific template (the DSML DA-track
+// and DSML SQL sections) applies, which risks inserting that boilerplate into a deck it doesn't
+// belong to, or skipping it for a deck that actually needs it. Repeated in both passes so the
+// audit can check template use against the real module, not re-guess it from scratch.
+const moduleContext = (program: string, module: string) =>
+  `This deck is for program "${program}", module "${module}". The SOP's module-specific template ` +
+  `sections (currently "DSML – DA track modules only" and "DSML – SQL module only") apply ONLY when ` +
+  `this module genuinely is that named module — never because the script's content merely resembles ` +
+  `that topic. If this program/module doesn't match either named template, ignore both of them entirely.\n\n`;
+
 export function pass1Prompt(o: {
   className: string;
+  program: string;
+  module: string;
   index: number;
   total: number;
   section: string;
@@ -21,6 +35,7 @@ export function pass1Prompt(o: {
     : "";
   return (
     `${FIDELITY_RULE}\n\n` +
+    moduleContext(o.program, o.module) +
     `This is section ${o.index + 1} of ${o.total} of the lecture script "${o.className}".\n\n` +
     continuity +
     `<script_section>\n${o.section}\n</script_section>\n\n` +
@@ -31,12 +46,13 @@ export function pass1Prompt(o: {
   );
 }
 
-export function pass2Prompt(o: { section: string; draft: string; summary?: string }): string {
+export function pass2Prompt(o: { program: string; module: string; section: string; draft: string; summary?: string }): string {
   const continuity = o.summary
     ? `Continuity from the earlier sections:\n<previous>\n${o.summary}\n</previous>\n\n`
     : "";
   return (
     `${FIDELITY_RULE}\n\n` +
+    moduleContext(o.program, o.module) +
     continuity +
     `<source_section>\n${o.section}\n</source_section>\n\n` +
     `<draft>\n${o.draft}\n</draft>\n\n` +
@@ -52,6 +68,9 @@ export function pass2Prompt(o: { section: string; draft: string; summary?: strin
     `doesn't match one of the SOP's named formatting categories — an unlisted cue stays in as plain text ` +
     `rather than being silently cut. Go line by line through the source section checking each statement has a ` +
     `counterpart in the draft; don't rely on skimming for what looks missing. ` +
+    `Also check any SOP module-specific template (DSML DA-track, DSML SQL) was applied only if this deck's ` +
+    `program/module actually matches it, and wasn't skipped if it does — per the module stated above, not ` +
+    `guessed from the script. ` +
     `Output only the corrected HackMD markdown, with no commentary, starting directly with the first ` +
     `card's ` + "`---`" + ` frontmatter. Do not wrap your reply in a \`\`\`markdown or \`\`\` code fence, ` +
     `even if the draft above has one — remove it. Code fences belong only inside a card, around actual code.`

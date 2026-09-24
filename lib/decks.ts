@@ -12,6 +12,8 @@ export type DeckRow = {
   created_by: string;
   status: "pending" | "done" | "failed" | "budget_exceeded";
   class_name: string;
+  program: string;
+  module: string;
   input_type: string;
   budget_tier: number;
 };
@@ -73,7 +75,7 @@ export async function createDeck(d: {
 export async function getDeck(id: string): Promise<DeckRow | null> {
   const { data, error } = await db()
     .from("decks")
-    .select("id, created_by, status, class_name, input_type, budget_tier")
+    .select("id, created_by, status, class_name, program, module, input_type, budget_tier")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;

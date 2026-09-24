@@ -94,8 +94,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   const userPrompt =
     pass === 1
-      ? pass1Prompt({ className: deck.class_name, index: sectionIndex, total: totalSections, section, summary })
-      : pass2Prompt({ section, draft, summary });
+      ? pass1Prompt({ className: deck.class_name, program: deck.program, module: deck.module, index: sectionIndex, total: totalSections, section, summary })
+      : pass2Prompt({ program: deck.program, module: deck.module, section, draft, summary });
 
   const model = llmModel();
   const encoder = new TextEncoder();

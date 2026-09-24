@@ -41,6 +41,32 @@ duplicated another rule or actively fought the CRITICAL wording-fidelity rule in
     said cards should follow topic boundaries rather than heading boundaries — the golden examples
     already do this correctly (e.g. IN / NOT IN / BETWEEN share one card as H2 subsections) but it
     was never stated as a rule, only ever shown implicitly. Added the rule explicitly.
+  - "When to start a new cue card" again (2026-09-24): the first version of that rule said a
+    numbered subsection like 3.1 nests as H3 under a repeated "Section 3" H2. A real example showed
+    the actually-wanted structure is flatter: skip repeating the title as a body heading at all, and
+    let 3.1, 3.2, 3.3 be the card's own H2 siblings directly, since the frontmatter title already
+    says "Section 3". Kept the H2-title+H3-aside pattern for the different case of a card with one
+    distinct extra subsection rather than a numbered peer cluster (matches the existing "Section 1"
+    / "Notation" card in notebook-cards.md, which this rule doesn't touch).
+  - Hallucination-risk audit (2026-09-24):
+    - "Use Pseudocode" bullet removed — written for a human deciding how to draft original content
+      from scratch; this pipeline only reformats an existing script, so it never applies and only
+      risked being read as permission to rewrite a source's own code into a different form.
+    - "Example Content" (Good/Bad Example) rewritten — the old "Good Example" was a reworded version
+      of the "Bad Example," not a restructured one (compare the opening sentences), and the "Note for
+      Writers" praised it for "formal and precise language" — directly contradicting the CRITICAL
+      fidelity rule in lib/prompts.ts, in text sent as literal system-prompt content on every call.
+      Same category of leftover as the already-removed "Objectives" section: guidance for a human
+      writing from scratch, not for restructuring an existing script. Now both examples use the exact
+      same words; only structure differs.
+    - DSML practice-question link: added "never invent or guess one" — the existing wording ("this
+      link changes from one lecture to another") never said the replacement must come from the
+      script, matching the same risk the image-placeholder rule already guards against elsewhere.
+    - Program/module now passed into both prompts (lib/prompts.ts, threaded from lib/decks.ts's
+      DeckRow) — the model previously had no way to know which module a deck belongs to, despite the
+      SOP having module-specific template sections (DSML DA-track, DSML SQL), and had to guess
+      applicability from the script's own content. The person creating the deck already picks
+      program/module explicitly on the form; this just uses that instead of re-guessing it.
 Delete this comment whenever you're happy with the result; it's here so the change is auditable.
 -->
 
@@ -61,7 +87,6 @@ So a alot of such cards are combined and then a lectures complete cue card is cr
 
 ### Content
 
-- Use Pseudocode: For DSA topics, use pseudocode. For other topics, follow the language used in the script.
 - Don't use screenshots/images for code.
 - Use Punctuation Correctly: Correct punctuation usage ensures that the content flows well and is easy to read.
 - Structuring: Ensure the content is well-structured with proper headings and subheadings.
@@ -77,34 +102,9 @@ So a alot of such cards are combined and then a lectures complete cue card is cr
 
 ## Example Content
 
-### Good Example
+Both examples below say exactly the same thing, in exactly the same words — that's deliberate. The only difference between them is structure.
 
-````markdown
-# Introduction
-
-The prefix sum is a common concept in data structure and algorithm. It's a method where an array is modified such that each element at a given index 'i' in the output array is the sum of array elements from index '0' through 'i' in the input array.
-
-[Note to instructor]
-Mention Importance of Prefix sum and Draw cases of each on white board to explain them
-
-# Importance of Prefix Sum
-
-- Prefix sum can help solve many problems efficiently, particularly those that require cumulative summations.
-- This method often improves the time complexity of algorithms, making them more efficient.
-
-# Key Points
-
-- Prefix sum array is also known as a cumulative array.
-- It's a quick way to calculate cumulative sums of arrays, which can be utilized in multiple problem-solving contexts.
-
-# Steps to Calculate Prefix Sum
-
-- Step 1: Initialize the first element of the prefix sum array with the first element of the original array.
-- Step 2: Add the current element in the original array to the previous element in the prefix sum array. Store this in the current index of the prefix sum array.
-- Step 3: Repeat Step 2 for all elements in the original array.
-````
-
-### Bad Example
+### Bad Example — one wall of text
 
 So, we have a thing called Prefix Sum, in the field of data structures and algorithms, it is a method that modifies an array so that the element at each index 'i' in the new array is the sum of the elements from '0' to 'i' in the old array.
 The Prefix Sum concept is really important because it can solve many problems more efficiently, especially the ones that need to get cumulative sums. It can help us make algorithms run faster, which is always good.
@@ -112,10 +112,36 @@ There are things you should remember about Prefix Sum: firstly, it is also calle
 Calculating Prefix Sum goes like this: firstly, we take the first element of the old array and put it as the first element of the new array; secondly, we take the current element in the old array and add it to the last element in the new array, then put this sum in the new array; thirdly, we do the second step again and again for all the elements.
 Understanding the prefix sum will help you design better algorithms, so try using it in different problems to get good at it.
 
+### Good Example — same words, restructured
+
+````markdown
+# Introduction
+
+So, we have a thing called Prefix Sum, in the field of data structures and algorithms, it is a method that modifies an array so that the element at each index 'i' in the new array is the sum of the elements from '0' to 'i' in the old array.
+
+# Importance of Prefix Sum
+
+The Prefix Sum concept is really important because it can solve many problems more efficiently, especially the ones that need to get cumulative sums. It can help us make algorithms run faster, which is always good.
+
+# Key Points
+
+There are things you should remember about Prefix Sum:
+- firstly, it is also called a cumulative array
+- secondly, it's a quick way to get cumulative sums of arrays which is useful for a lot of problems
+
+# Steps to Calculate Prefix Sum
+
+Calculating Prefix Sum goes like this:
+- firstly, we take the first element of the old array and put it as the first element of the new array
+- secondly, we take the current element in the old array and add it to the last element in the new array, then put this sum in the new array
+- thirdly, we do the second step again and again for all the elements
+
+Understanding the prefix sum will help you design better algorithms, so try using it in different problems to get good at it.
+````
+
 Note for Writers:
 
-The "Bad Example" is not well-structured and uses casual language that could lead to confusion.
-The "Good Example," on the other hand, clearly structures the information with bullet points and subheadings, uses formal and precise language, and clearly highlights key points. It also has prompts for instructors.
+Notice that not one word changed between the two — no "cleaning up" the casual phrasing, no shortening, no making it sound more formal. The only things that changed are structural: headings were added, and the "firstly / secondly / thirdly" runs were split into bullets at their own existing boundaries. That's the only kind of change this pipeline ever makes to a script's own wording — restructuring, never rewording, no matter how repetitive or casual the source sounds.
 
 ## Code blocks
 
@@ -153,7 +179,7 @@ Adjust the height and width of the frame as per the view and needs of the animat
 
 ### Heading levels
 
-No lecture-title heading — cue cards start directly with the first card's metadata. Use H2 for a card's own main heading; use H3, and H4 if it's needed, for its subsections.
+No lecture-title heading — cue cards start directly with the first card's metadata. The card's `title:` metadata already names it; the body doesn't need to repeat that name as its own heading unless the card has exactly one extra aside worth calling out (see the second example below). Use H2 for whatever heading actually starts the card's real content; use H3, and H4 if it's needed, for genuine subsections nested under that.
 
 ```
 ## The Complete Architecture Flow
@@ -161,9 +187,28 @@ No lecture-title heading — cue cards start directly with the first card's meta
 
 ### When to start a new cue card
 
-A new `---` card is for a genuinely new topic or teaching beat — not for every heading the source has. If the source nests a subheading under a numbered section (`3`, then `3.1`, `3.2`, ...) and that subheading is a step or part of the same beat rather than a logically separate topic, it stays inside the same card as H3 (see "Heading levels" above), not as a card of its own. Only give a subsection its own card when it's substantial enough to stand on its own — its own multi-minute chunk of teaching, its own code walkthrough, its own quiz — not just because it has a heading.
+A new `---` card is for a genuinely new topic or teaching beat — not for every heading the source has. Only give a subsection its own card when it's substantial enough to stand on its own — its own multi-minute chunk of teaching, its own code walkthrough, its own quiz — not just because it has a heading. A card that ends up holding little more than a heading and one or two lines is a sign two cards should have been one.
 
-A card that ends up holding little more than a heading and one or two lines is a sign two cards should have been one. When in doubt, keep sections `3`, `3.1`, `3.2` together in one card unless `3.2` alone is meaty enough to teach on its own.
+**A numbered cluster (`3`, then `3.1`, `3.2`, `3.3`, ...) is one card, and the sub-points are that card's own H2 headings — not nested under a repeated "Section 3" heading.** The card's title metadata already says "Section 3"; don't also write it into the body as a heading. Go straight from the frontmatter into `3.1`, `3.2`, `3.3` as siblings at H2. This applies the same way whether the source is a script or a notebook.
+
+```markdown
+---
+title: Section 3 - Selectors, Computing Derived Data
+description: Reusable selectors for deriving cart totals from state
+duration: 1200
+card_type: cue_card
+---
+
+## 3.1 The Pattern We Keep Repeating
+
+...
+
+## 3.2 Adding Selectors to the Cart Slice
+
+...
+```
+
+This is different from a card that has one distinct extra aside rather than a numbered cluster of peer sub-points — there, repeating the card's own title as an H2 and nesting the one aside under it at H3 is fine (for example, a card titled "Section 1: From One Decision to Many" whose body opens with `## Section 1: From One Decision to Many` and later has a single `### Notation` aside). The rule above is specifically for numbered, peer-level sub-points — don't wrap those in an extra heading that just repeats the title.
 
 ### Instructor-only headings
 
@@ -370,7 +415,7 @@ This will help the learners to get familiar with the problem solving process and
 > Q. https://www.scaler.com/hire/test/problem/54464/ (Where !=): Emp 101 - Easy
 ````
 
-Only this last question link changes from one lecture to another; everything else in the block above stays the same.
+Only this last question link changes from one lecture to another; everything else in the block above stays the same. Only replace it if the script itself gives you this lecture's real practice-question link — never invent or guess one. If the script doesn't provide one, leave the example link above as it is rather than making one up.
 
 ### DSML – SQL module only
 

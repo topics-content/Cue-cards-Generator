@@ -91,8 +91,8 @@ async function runModel(model: string, className: string, sections: string[], sy
   try {
     for (let i = 0; i < sections.length; i++) {
       const summary = runningSummary(done);
-      const draft = await call({ system, user: pass1Prompt({ className, index: i, total: sections.length, section: sections[i], summary }) });
-      const audit = await call({ system, user: pass2Prompt({ section: sections[i], draft: draft.text, summary }), reasoningEffort: "low" });
+      const draft = await call({ system, user: pass1Prompt({ className, program: "Eval", module: "Eval", index: i, total: sections.length, section: sections[i], summary }) });
+      const audit = await call({ system, user: pass2Prompt({ program: "Eval", module: "Eval", section: sections[i], draft: draft.text, summary }), reasoningEffort: "low" });
       for (const u of [draft.usage, audit.usage]) {
         row.inTok += u.inputTokens;
         row.outTok += u.outputTokens;
