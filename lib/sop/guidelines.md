@@ -35,6 +35,12 @@ duplicated another rule or actively fought the CRITICAL wording-fidelity rule in
     check for rewording and invention, never for content dropped with no trace — added a line saying
     an unrecognized bracketed cue is kept as plain text, not cut, and added that third check to the
     audit prompt itself.
+  - "When to start a new cue card" (2026-09-24, new section): a real deck split a numbered
+    "Section 3" / "3.1" / "3.2" source structure into a separate card per subheading, including a
+    card that was little more than a heading with almost no content of its own. Nothing anywhere
+    said cards should follow topic boundaries rather than heading boundaries — the golden examples
+    already do this correctly (e.g. IN / NOT IN / BETWEEN share one card as H2 subsections) but it
+    was never stated as a rule, only ever shown implicitly. Added the rule explicitly.
 Delete this comment whenever you're happy with the result; it's here so the change is auditable.
 -->
 
@@ -152,6 +158,12 @@ No lecture-title heading — cue cards start directly with the first card's meta
 ```
 ## The Complete Architecture Flow
 ```
+
+### When to start a new cue card
+
+A new `---` card is for a genuinely new topic or teaching beat — not for every heading the source has. If the source nests a subheading under a numbered section (`3`, then `3.1`, `3.2`, ...) and that subheading is a step or part of the same beat rather than a logically separate topic, it stays inside the same card as H3 (see "Heading levels" above), not as a card of its own. Only give a subsection its own card when it's substantial enough to stand on its own — its own multi-minute chunk of teaching, its own code walkthrough, its own quiz — not just because it has a heading.
+
+A card that ends up holding little more than a heading and one or two lines is a sign two cards should have been one. When in doubt, keep sections `3`, `3.1`, `3.2` together in one card unless `3.2` alone is meaty enough to teach on its own.
 
 ### Instructor-only headings
 

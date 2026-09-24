@@ -10,6 +10,7 @@
     "test": "vitest run",
     "verify:caching": "tsx --env-file=.env.local scripts/verify-caching.ts",
     "compare:models": "tsx --env-file=.env.local scripts/compare-models.ts",
+    "eval:models": "tsx --env-file=.env.local scripts/eval-models.ts",
     "check:db": "tsx --env-file=.env.local scripts/check-db.ts",
     "check:billing": "tsx --env-file=.env.local scripts/check-billing-mode.ts",
     "backfill:byok-cost": "tsx --env-file=.env.local scripts/backfill-byok-cost.ts"
