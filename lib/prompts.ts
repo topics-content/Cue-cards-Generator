@@ -7,7 +7,9 @@ const FIDELITY_RULE = `CRITICAL — do not reword the script:
 - Carry over explanations, definitions, statements, and code exactly as written in <script_section> — same words, same order, same meaning.
 - Do NOT paraphrase, summarize, shorten for style, "clean up" phrasing, add explanation the source doesn't contain, or drop stated detail.
 - The only changes allowed are structural: splitting the text into cue cards, adding headings/bullets/frontmatter/actionable formatting per the SOP, and fixing an isolated spelling typo without rephrasing the sentence it's in.
-- If a sentence could be kept as-is or improved, keep it as-is.`;
+- If a sentence could be kept as-is or improved, keep it as-is.
+- A source heading's own wording must still appear somewhere in the output — as the card's body H2, or folded into a nearby line — even when the card's title: metadata uses different, more descriptive wording per the SOP. Giving a card a better title is not permission for the source heading's own words to vanish with no trace.
+- Never state the same piece of content twice. Carrying content over means moving it to exactly one place, not copying it into more than one card or heading — restructuring is not an excuse to repeat something.`;
 
 // Which module a deck belongs to is decided by the person creating it, on the form, before
 // generation ever starts — never guessed from the script. Without this, the model would have to
@@ -67,7 +69,13 @@ export function pass2Prompt(o: { program: string; module: string; section: strin
     `[REVEAL ANSWER], stage directions, and asides; add it back word-for-word in the right place, even if it ` +
     `doesn't match one of the SOP's named formatting categories — an unlisted cue stays in as plain text ` +
     `rather than being silently cut. Go line by line through the source section checking each statement has a ` +
-    `counterpart in the draft; don't rely on skimming for what looks missing. ` +
+    `counterpart in the draft; don't rely on skimming for what looks missing. This includes the source's own ` +
+    `headings: if a card's title is more descriptive than the heading that introduced that content in ` +
+    `<source_section>, confirm the heading's own words still show up somewhere in the card (as an H2, or ` +
+    `folded into a line) — a heading being replaced by a better title is not the same as its words being kept, ` +
+    `and it must not simply disappear. ` +
+    `Separately, check for content stated more than once — the same sentence, code block, heading, or bullet ` +
+    `appearing in two places in the draft; keep the one copy in the right place and delete the rest. ` +
     `Also check any SOP module-specific template (DSML DA-track, DSML SQL) was applied only if this deck's ` +
     `program/module actually matches it, and wasn't skipped if it does — per the module stated above, not ` +
     `guessed from the script. ` +

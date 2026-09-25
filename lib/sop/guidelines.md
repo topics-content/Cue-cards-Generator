@@ -67,6 +67,20 @@ duplicated another rule or actively fought the CRITICAL wording-fidelity rule in
       SOP having module-specific template sections (DSML DA-track, DSML SQL), and had to guess
       applicability from the script's own content. The person creating the deck already picks
       program/module explicitly on the form; this just uses that instead of re-guessing it.
+  - "Instructor-only headings" (2026-09-25): a real deck's source heading ("## Backpropagation")
+    vanished with no trace after the model gave that card a more descriptive title, per the SOP's own
+    "title should be descriptive... not generic" rule. FIDELITY_RULE and pass2Prompt's audit checklist
+    in lib/prompts.ts only ever checked that prose statements/cues weren't dropped, never that a source
+    heading's own words survive somewhere once a card gets a different title — added that check. Also,
+    the "Instructor-only headings" section here said headings "should be plain, without any colour" —
+    directly contradicting both golden examples, which colour the Agenda heading with a red background
+    and "(for instructor only)". That convention was never stated in prose anywhere, only shown
+    implicitly in the golden examples — added it explicitly, and fixed the same plain, uncoloured
+    "## Agenda" worked example under "How to Add Tables in Markdown" to match.
+  - FIDELITY_RULE (2026-09-25): added an explicit "never state the same content twice" line, and a
+    matching audit check, alongside the heading-preservation fix above — the two changes were requested
+    together so that instructing the model to restore missing content doesn't tip it toward restoring
+    it in more than one place.
 Delete this comment whenever you're happy with the result; it's here so the change is auditable.
 -->
 
@@ -212,7 +226,13 @@ This is different from a card that has one distinct extra aside rather than a nu
 
 ### Instructor-only headings
 
-Headings should be plain, without any colour:
+A heading marking content that shouldn't be shown to learners — the Agenda card's heading is the standing example — gets a red background and says so in words, the same way both golden examples do it:
+
+```
+## <span style="background-color: red;">Agenda (for instructor only)</span>
+```
+
+An ordinary heading that isn't instructor-only stays plain, without any colour:
 
 ```
 ## The Complete Architecture Flow
@@ -320,7 +340,7 @@ table th { background:#1e3a8a; color:white; }
 table td:nth-child(2) { font-weight:bold; }
 </style>
 
-## Agenda
+## <span style="background-color: red;">Agenda (for instructor only)</span>
 
 - First topic
 - Second topic
