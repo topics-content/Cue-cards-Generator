@@ -82,6 +82,37 @@ export async function getDeck(id: string): Promise<DeckRow | null> {
   return data;
 }
 
+/** Under the 1-hour OpenRouter prompt-cache TTL, with margin for this check's own round-trip. */
+const WARM_WINDOW_MS = 50 * 60 * 1000;
+
+/**
+ * Rough proxy for "is the SOP+example prompt cache for this input-type family still warm" —
+ * there's no API to ask OpenRouter/Supabase that directly (checking would cost the same as just
+ * warming), so this checks whether any deck of a matching input type was created recently, since
+ * every deck's own generate calls refresh that same cache entry. Not exact — a deck can sit
+ * unfinished for a while after creation — but good enough to skip a redundant prewarm ping in the
+ * common case of several decks run back to back in one session. Fails safe: any error here is
+ * treated as "not recently active," so the caller still warms up rather than silently skipping it.
+ * The query itself is also a real Supabase read, so it doubles as a wake-up nudge either way.
+ */
+export async function wasRecentlyActive(inputTypes: string[]): Promise<boolean> {
+  try {
+    const { data, error } = await db()
+      .from("decks")
+      .select("created_at")
+      .in("input_type", inputTypes)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return false;
+    return Date.now() - new Date(data.created_at).getTime() < WARM_WINDOW_MS;
+  } catch (err) {
+    console.warn("cache-warmth check failed (non-fatal); warming anyway", err);
+    return false;
+  }
+}
+
 export async function setDeckStatus(id: string, status: DeckRow["status"]) {
   const { error } = await db().from("decks").update({ status }).eq("id", id);
   if (error) throw error;

@@ -379,6 +379,12 @@ here
 write the code
 here
 ```
+if language not known
+
+```text=
+Code
+```
+
 
 ### DSML – DA track modules only
 
