@@ -5,7 +5,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
 import { Spinner } from "@/components/Spinner";
 import { IssueBox, toGroups } from "@/components/ValidationIssues";
-import { splitCards } from "@/lib/cards";
+import { frontmatterFenceLines, splitCards } from "@/lib/cards";
 import { validateMarkdown, type ValidationResult } from "@/lib/validateCards";
 import type { ReviewStatus } from "@/lib/decks";
 
@@ -43,6 +43,7 @@ export function DeckEditor(p: Props) {
   // Mutable (not the readonly-`.current` RefObject useRef<T>(null) normally infers) since these
   // get assigned by hand in the merged ref callbacks below — see bindContentRef.
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
   const leftGutterRef = useRef<HTMLDivElement>(null);
   const rightGutterRef = useRef<HTMLDivElement>(null);
   const leftContentRef = useRef<HTMLElement | null>(null);
@@ -71,6 +72,7 @@ export function DeckEditor(p: Props) {
   }, [dirty]);
   const needsValidation = text !== validatedText;
   const cards = useMemo(() => splitCards(text), [text]);
+  const fenceLines = useMemo(() => frontmatterFenceLines(text), [text]);
   const { errGroups, warnGroups } = useMemo(() => toGroups(result), [result]);
   const verdictPass = result.totalErrors === 0;
 
@@ -236,14 +238,14 @@ export function DeckEditor(p: Props) {
             <h2 className="text-sm font-semibold">Script</h2>
             <span className="text-xs text-muted">{p.source.length.toLocaleString()} chars · read-only</span>
           </div>
-          <div className="flex min-h-0 flex-1">
+          <div className="flex min-h-0 min-w-0 flex-1">
             <div ref={gutterRef} aria-hidden className="select-none overflow-hidden bg-background py-3 pl-2 pr-2 text-right font-mono text-xs leading-relaxed text-muted">
               {lines.map((_, i) => <div key={i}>{i + 1}</div>)}
             </div>
             <pre
               ref={(el) => bindContentRef(slot, el)}
               onScroll={(e) => handlePaneScroll(slot, e.currentTarget)}
-              className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed"
+              className="min-h-0 min-w-0 flex-1 overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-xs leading-relaxed"
             >
               {p.source}
             </pre>
@@ -260,8 +262,11 @@ export function DeckEditor(p: Props) {
               Cue cards (Raw) <span className="font-normal text-muted">({cards.length})</span>
             </h2>
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => insertAtCursor(IMAGE_SNIPPET)} className={ghost}>Add Image</button>
-              <button type="button" onClick={() => insertAtCursor(ANIMATION_SNIPPET)} className={ghost}>Add Animation</button>
+              {/* preventDefault on mousedown keeps focus (and selectionStart/End) on the textarea —
+                  otherwise clicking the button blurs it first and the insert falls back to appending
+                  at the very end. */}
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertAtCursor(IMAGE_SNIPPET)} className={ghost}>Add Image</button>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertAtCursor(ANIMATION_SNIPPET)} className={ghost}>Add Animation</button>
               {dirty && (
                 <button type="button" onClick={() => setText(savedText)} className="text-xs text-muted underline decoration-dotted hover:text-foreground">
                   Reset to saved
@@ -269,22 +274,43 @@ export function DeckEditor(p: Props) {
               )}
             </div>
           </div>
-          <div className="flex min-h-0 flex-1">
+          <div className="flex min-h-0 min-w-0 flex-1">
             <div ref={gutterRef} aria-hidden className="select-none overflow-hidden bg-background py-3 pl-2 pr-2 text-right font-mono text-xs leading-relaxed text-muted">
               {text.split("\n").map((_, i) => <div key={i}>{i + 1}</div>)}
             </div>
-            <textarea
-              ref={(el) => {
-                textareaRef.current = el;
-                bindContentRef(slot, el);
-              }}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onScroll={(e) => handlePaneScroll(slot, e.currentTarget)}
-              spellCheck={false}
-              wrap="off"
-              className="min-h-0 flex-1 resize-none overflow-auto whitespace-pre bg-transparent p-3 font-mono text-xs leading-relaxed outline-none"
-            />
+            <div className="relative min-h-0 min-w-0 flex-1">
+              {/* Backdrop showing through the textarea's transparent background, highlighting each
+                  card's `---` frontmatter fences — the textarea itself can't style individual lines. */}
+              <div
+                ref={highlightRef}
+                aria-hidden
+                className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre p-3 font-mono text-xs leading-relaxed"
+              >
+                {text.split("\n").map((line, i) => (
+                  <div key={i} className={fenceLines.has(i) ? "-mx-3 bg-brand/15 px-3" : undefined}>
+                    {line || " "}
+                  </div>
+                ))}
+              </div>
+              <textarea
+                ref={(el) => {
+                  textareaRef.current = el;
+                  bindContentRef(slot, el);
+                }}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onScroll={(e) => {
+                  handlePaneScroll(slot, e.currentTarget);
+                  if (highlightRef.current) {
+                    highlightRef.current.scrollTop = e.currentTarget.scrollTop;
+                    highlightRef.current.scrollLeft = e.currentTarget.scrollLeft;
+                  }
+                }}
+                spellCheck={false}
+                wrap="off"
+                className="absolute inset-0 resize-none overflow-auto whitespace-pre bg-transparent p-3 font-mono text-xs leading-relaxed outline-none"
+              />
+            </div>
           </div>
         </>
       );
@@ -300,7 +326,7 @@ export function DeckEditor(p: Props) {
         <div
           ref={(el) => bindContentRef(slot, el)}
           onScroll={(e) => handlePaneScroll(slot, e.currentTarget)}
-          className="min-h-0 flex-1 space-y-4 overflow-auto p-4"
+          className="min-h-0 min-w-0 flex-1 space-y-4 overflow-auto p-4"
         >
           {cards.length === 0 && <p className="text-sm text-muted">No cue cards yet.</p>}
           {cards.map((c, i) => (
@@ -394,10 +420,10 @@ export function DeckEditor(p: Props) {
       )}
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden p-3 lg:grid-cols-2 lg:gap-4 lg:p-4">
-        <section aria-label={VIEW_LABEL[leftView]} className="flex min-h-0 flex-col rounded-xl border border-line bg-surface">
+        <section aria-label={VIEW_LABEL[leftView]} className="flex min-h-0 min-w-0 flex-col rounded-xl border border-line bg-surface">
           {renderPanel(leftView, "left")}
         </section>
-        <section aria-label={VIEW_LABEL[rightView]} className="flex min-h-0 flex-col rounded-xl border border-line bg-surface">
+        <section aria-label={VIEW_LABEL[rightView]} className="flex min-h-0 min-w-0 flex-col rounded-xl border border-line bg-surface">
           {renderPanel(rightView, "right")}
         </section>
       </div>

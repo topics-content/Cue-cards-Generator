@@ -24,6 +24,36 @@ function frontmatterStarts(text: string): { start: number; end: number; fm: stri
 }
 
 /**
+ * 0-based line indices of the `---` fences that open/close each card's frontmatter block — for
+ * highlighting card boundaries in a raw editor. Mirrors frontmatterStarts' rule (a bare `---` only
+ * counts once a `card_type:` line turns up before the next `---`) but works line-by-line instead of
+ * on character offsets, since that's what a line-numbered editor gutter needs.
+ */
+export function frontmatterFenceLines(text: string): Set<number> {
+  const lines = text.split("\n");
+  const fenceLines = new Set<number>();
+  let i = 0;
+  while (i < lines.length) {
+    if (lines[i].trim() === "---") {
+      let j = i + 1;
+      let hasCardType = false;
+      while (j < lines.length && lines[j].trim() !== "---") {
+        if (/^card_type:/.test(lines[j])) hasCardType = true;
+        j++;
+      }
+      if (j < lines.length && hasCardType) {
+        fenceLines.add(i);
+        fenceLines.add(j);
+        i = j + 1;
+        continue;
+      }
+    }
+    i++;
+  }
+  return fenceLines;
+}
+
+/**
  * Some models wrap their whole reply in a single ```markdown ... ``` fence despite being told to
  * output raw markdown with no commentary — harmless in the model's own preview, but the literal
  * backticks then land in HackMD on copy/paste. Strip exactly one such wrapper, and only when it's
