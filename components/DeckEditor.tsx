@@ -280,15 +280,18 @@ export function DeckEditor(p: Props) {
             </div>
             <div className="relative min-h-0 min-w-0 flex-1">
               {/* Backdrop showing through the textarea's transparent background, highlighting each
-                  card's `---` frontmatter fences — the textarea itself can't style individual lines. */}
+                  card's `---` frontmatter fences — the textarea itself can't style individual lines.
+                  Renders no real text (one nbsp per line, just to hold the right height): the
+                  textarea on top already shows the actual characters, so a scroll-sync lag under
+                  fast scrolling shows at most a misaligned tint, never doubled text. */}
               <div
                 ref={highlightRef}
                 aria-hidden
                 className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre p-3 font-mono text-xs leading-relaxed"
               >
-                {text.split("\n").map((line, i) => (
-                  <div key={i} className={fenceLines.has(i) ? "-mx-3 bg-brand/15 px-3" : undefined}>
-                    {line || " "}
+                {text.split("\n").map((_, i) => (
+                  <div key={i} className={fenceLines.has(i) ? "-mx-3 bg-brand-soft px-3" : undefined}>
+                    {"\u00A0"}
                   </div>
                 ))}
               </div>

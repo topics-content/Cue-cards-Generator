@@ -17,6 +17,7 @@
   --primary-hover: #174714;
   --primary-fg: #ffffff;
   --brand: #1f5c1a; /* primary used as text or chart marks on surfaces */
+  --brand-soft: #e6f2e1;
   --accent: #0b5fbf; /* focus rings, hover borders, links to detail */
   --accent-fg: #ffffff;
   --ok: #1b6b33;
@@ -42,6 +43,7 @@
   --primary-hover: #d6f98f;
   --primary-fg: #0c1204;
   --brand: #c6f26b;
+  --brand-soft: #263116;
   --accent: #7db4ff;
   --accent-fg: #04101f;
   --ok: #63d68a;
@@ -68,6 +70,7 @@
     --primary-hover: #d6f98f;
     --primary-fg: #0c1204;
     --brand: #c6f26b;
+    --brand-soft: #263116;
     --accent: #7db4ff;
     --accent-fg: #04101f;
     --ok: #63d68a;

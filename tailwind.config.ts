@@ -25,7 +25,7 @@ const config: Config = {
           hover: "var(--primary-hover)",
           fg: "var(--primary-fg)",
         },
-        brand: "var(--brand)",
+        brand: { DEFAULT: "var(--brand)", soft: "var(--brand-soft)" },
         accent: { DEFAULT: "var(--accent)", fg: "var(--accent-fg)" },
         danger: { DEFAULT: "var(--danger)", soft: "var(--danger-soft)" },
         warn: { DEFAULT: "var(--warn)", soft: "var(--warn-soft)" },
