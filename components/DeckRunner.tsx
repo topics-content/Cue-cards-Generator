@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { OutputView, type Stats } from "@/components/OutputView";
 import { Spinner } from "@/components/Spinner";
 import { runWithConcurrency } from "@/lib/concurrency";
@@ -61,8 +62,6 @@ export function DeckRunner(p: Props) {
   const [activeAudits, setActiveAudits] = useState<number[]>([]);
   const [phase, setPhase] = useState<Phase>(() => (p.initialStop ? "budget" : outputs.current.every(Boolean) ? "done" : "idle"));
   const [stats, setStats] = useState<Stats>(p.initialStats);
-  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>(p.initialReviewStatus);
-  const [editedOutput, setEditedOutput] = useState<string | null>(p.initialEditedOutput);
   const [error, setError] = useState<{ index: number; message: string } | null>(null);
   const [stop, setStop] = useState<BudgetStop | null>(p.initialStop ?? null);
   const [continuing, setContinuing] = useState(false);
@@ -234,7 +233,9 @@ export function DeckRunner(p: Props) {
 
   // A saved manual edit is the deck's source of truth for display once it exists — the generated
   // per-section texts underneath are untouched and keep driving progress/resume, just not the view.
-  const markdown = editedOutput ?? texts.filter((t) => t.trim()).join("\n\n");
+  // Only ever changes via the full-screen editor (a separate page), which a fresh navigation back
+  // here re-fetches from the server — so this needs no client-side state of its own.
+  const markdown = p.initialEditedOutput ?? texts.filter((t) => t.trim()).join("\n\n");
   const box = "rounded-lg border px-4 py-4 text-sm";
   const primary = "rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg transition hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
   const ghost = "rounded-lg border border-line px-4 py-2 text-sm font-medium transition hover:border-accent";
@@ -259,11 +260,7 @@ export function DeckRunner(p: Props) {
       elapsedMs={elapsed}
       running={phase === "generating" || phase === "auditing"}
       filenameBase={slug(`${p.module}-${p.className}`)}
-      deckId={p.deckId}
-      generationDone={phase === "done"}
-      reviewStatus={reviewStatus}
-      onReviewStatusChange={setReviewStatus}
-      onSaved={setEditedOutput}
+      reviewStatus={p.initialReviewStatus}
     >
       {phase !== "done" || n > 1 ? (
         <div className="rounded-xl border border-line bg-surface p-4">
@@ -322,8 +319,11 @@ export function DeckRunner(p: Props) {
       ) : null}
 
       {phase === "done" && (
-        <div role="status" className={`${box} border-ok bg-ok-soft text-ok`}>
-          ✓ All {n} section{n === 1 ? "" : "s"} complete. Use Copy all or Download .md, then paste into HackMD.
+        <div role="status" className={`${box} flex flex-wrap items-center justify-between gap-3 border-ok bg-ok-soft text-ok`}>
+          <span>✓ All {n} section{n === 1 ? "" : "s"} complete. Use Copy all or Download .md, then paste into HackMD.</span>
+          <Link href={`/decks/${p.deckId}/edit`} className={`${primary} whitespace-nowrap`}>
+            Validate and Edit this cue card
+          </Link>
         </div>
       )}
 

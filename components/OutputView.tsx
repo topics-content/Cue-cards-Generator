@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { splitCards } from "@/lib/cards";
 import { inr, longDuration, tokens, usd } from "@/lib/format";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
-import { CueCardValidatorDialog } from "@/components/CueCardValidatorDialog";
 import type { ReviewStatus } from "@/lib/decks";
 
 export type Stats = { inputTokens: number; outputTokens: number; cachedTokens: number; costUsd: number };
@@ -21,12 +20,7 @@ type Props = {
   running?: boolean;
   filenameBase: string;
   children?: ReactNode; // banners, progress, controls
-  deckId: string;
-  generationDone: boolean;
   reviewStatus: ReviewStatus;
-  onReviewStatusChange: (status: ReviewStatus) => void;
-  /** Called with the newly-saved markdown when the validator persists an edit (as part of marking completed). */
-  onSaved: (markdown: string) => void;
 };
 
 function CopyButton({ text, label, className = "" }: { text: string; label: string; className?: string }) {
@@ -59,7 +53,6 @@ function CopyButton({ text, label, className = "" }: { text: string; label: stri
 export function OutputView(p: Props) {
   const [mode, setMode] = useState<"raw" | "preview">("preview");
   const [copiedAll, setCopiedAll] = useState(false);
-  const [validatorOpen, setValidatorOpen] = useState(false);
   const cards = useMemo(() => splitCards(p.markdown), [p.markdown]);
   const outRef = useRef<HTMLDivElement>(null);
 
@@ -141,9 +134,6 @@ export function OutputView(p: Props) {
               Cue cards <span className="font-normal text-muted">({cards.length})</span>
             </h2>
             <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => setValidatorOpen(true)} disabled={!p.markdown} className="rounded-lg border border-line px-4 py-2 text-xs font-medium transition hover:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50">
-              Validate this cue card
-            </button>
             <button type="button" onClick={copyAll} disabled={!p.markdown} className="rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-fg transition hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50">
               {copiedAll ? "✓ Copied" : "Copy all"}
             </button>
@@ -193,17 +183,6 @@ export function OutputView(p: Props) {
           </div>
         </section>
       </div>
-
-      <CueCardValidatorDialog
-        open={validatorOpen}
-        onClose={() => setValidatorOpen(false)}
-        deckId={p.deckId}
-        markdown={p.markdown}
-        generationDone={p.generationDone}
-        reviewStatus={p.reviewStatus}
-        onReviewStatusChange={p.onReviewStatusChange}
-        onSaved={p.onSaved}
-      />
     </div>
   );
 }
