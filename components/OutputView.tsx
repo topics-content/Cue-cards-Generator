@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { splitCards } from "@/lib/cards";
 import { inr, longDuration, tokens, usd } from "@/lib/format";
+import { HighlightedMarkdown } from "@/components/HighlightedMarkdown";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
 import type { ReviewStatus } from "@/lib/decks";
 
@@ -172,11 +173,7 @@ export function OutputView(p: Props) {
                   <CopyButton text={c.raw} label={`Copy card ${i + 1}`} />
                 </header>
                 <div className="p-4">
-                  {mode === "raw" ? (
-                    <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed">{c.raw}</pre>
-                  ) : (
-                    <MarkdownPreview markdown={c.body} />
-                  )}
+                  {mode === "raw" ? <HighlightedMarkdown text={c.raw} /> : <MarkdownPreview markdown={c.body} />}
                 </div>
               </article>
             ))}

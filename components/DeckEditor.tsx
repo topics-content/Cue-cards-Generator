@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import CodeMirror, { EditorSelection } from "@uiw/react-codemirror";
+import type { EditorView } from "@codemirror/view";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
 import { Spinner } from "@/components/Spinner";
 import { IssueBox, toGroups } from "@/components/ValidationIssues";
-import { frontmatterFenceLines, markupLineKinds, splitCards, type LineKind } from "@/lib/cards";
+import { splitCards, type LineKind } from "@/lib/cards";
+import { cmTheme, lineDecorationExtension, mdLanguageSupport, mdSyntaxHighlighting, noSpellcheck } from "@/lib/markdownEditor";
 import { validateMarkdown, type ValidationResult } from "@/lib/validateCards";
 import type { ReviewStatus } from "@/lib/decks";
 
@@ -29,29 +32,36 @@ const VIEW_OPTIONS: { value: View; label: string }[] = [
 ];
 const VIEW_LABEL: Record<View, string> = Object.fromEntries(VIEW_OPTIONS.map((o) => [o.value, o.label])) as Record<View, string>;
 
-// Backdrop tints for the raw editor. The backdrop rows hold no text, so opacity only fades the tint.
-const LINE_TINT: Record<Exclude<LineKind, null>, string> = {
-  h1: "bg-info-soft",
-  h2: "bg-info-soft opacity-80",
-  h3: "bg-info-soft opacity-50",
-  media: "bg-warn-soft",
-};
+// Per-line background classes for the raw editor's `---` fences, headings and img/iframe lines —
+// passed into lib/markdownHighlight.ts's lineDecorationExtension, which applies them inside
+// CodeMirror. Kept here (not in lib/) so Tailwind's content scan (app/ and components/ only) picks
+// up these literal class names.
+function classForRawLine(isFence: boolean, kind: LineKind): string | null {
+  if (isFence) return "bg-brand-soft";
+  if (kind === "h1") return "bg-info-soft";
+  if (kind === "h2") return "bg-info-soft opacity-80";
+  if (kind === "h3") return "bg-info-soft opacity-50";
+  if (kind === "media") return "bg-warn-soft";
+  return null;
+}
 
 const IMAGE_SNIPPET = "<img src='Link of Image' width=100%>";
 const ANIMATION_SNIPPET = '<iframe src="Link of Hosted Animations" width="100%" height="700" style="border:1px solid #ccc; border-radius:8px;"></iframe>';
 
 /**
  * Full-screen replacement for the old modal validator: source and cue cards side by side, an
- * editable textarea instead of a read-only preview, and Save wired to the same server-side
- * re-validation the old "Mark as completed" flow used (see app/api/decks/[id]/complete/route.ts).
- * Save stays disabled until the latest Validate run on the current text has zero errors.
+ * editable raw view (a syntax-highlighted CodeMirror editor, see lib/markdownHighlight.ts) instead
+ * of a read-only preview, and Save wired to the same server-side re-validation the old "Mark as
+ * completed" flow used (see app/api/decks/[id]/complete/route.ts). Save stays disabled until the
+ * latest Validate run on the current text has zero errors.
  */
 export function DeckEditor(p: Props) {
   const router = useRouter();
   // Mutable (not the readonly-`.current` RefObject useRef<T>(null) normally infers) since these
   // get assigned by hand in the merged ref callbacks below — see bindContentRef.
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const highlightRef = useRef<HTMLDivElement>(null);
+  // The raw pane is the one shared CodeMirror instance, same rationale as the old shared textarea:
+  // "raw" is never assigned to both sides at once (see setLeft/setRight below).
+  const cmViewRef = useRef<EditorView | null>(null);
   const leftGutterRef = useRef<HTMLDivElement>(null);
   const rightGutterRef = useRef<HTMLDivElement>(null);
   const leftContentRef = useRef<HTMLElement | null>(null);
@@ -69,7 +79,7 @@ export function DeckEditor(p: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   // Left/right side-by-side content pickers. Kept distinct from each other (see setLeftView /
-  // setRightView) since "raw" mounts the one shared textarea — two copies of it can't exist at once.
+  // setRightView) since "raw" mounts the one shared CodeMirror editor — two copies can't exist at once.
   const [leftView, setLeftView] = useState<View>("script");
   const [rightView, setRightView] = useState<View>("raw");
 
@@ -80,8 +90,6 @@ export function DeckEditor(p: Props) {
   }, [dirty]);
   const needsValidation = text !== validatedText;
   const cards = useMemo(() => splitCards(text), [text]);
-  const fenceLines = useMemo(() => frontmatterFenceLines(text), [text]);
-  const lineKinds = useMemo(() => markupLineKinds(text), [text]);
   const { errGroups, warnGroups } = useMemo(() => toGroups(result), [result]);
   const verdictPass = result.totalErrors === 0;
 
@@ -155,38 +163,26 @@ export function DeckEditor(p: Props) {
     if (otherGutterRef.current) otherGutterRef.current.scrollTop = otherEl.scrollTop;
   }
 
-  // See CueCardValidatorDialog's original note: lines can't wrap in this textarea (wrap="off")
-  // specifically so this math — line index × line height — stays exact.
   const jumpToLine = (line: number) => {
-    // Neither side may currently show the textarea — put it on the right so the jump has
+    // Neither side may currently show the raw editor — put it on the right so the jump has
     // somewhere to land (left is left untouched so Script, if showing there, stays put).
-    const rawSlot: "left" | "right" = leftView === "raw" ? "left" : "right";
     if (leftView !== "raw" && rightView !== "raw") setRightView("raw");
     requestAnimationFrame(() => {
-      const ta = textareaRef.current;
-      if (!ta) return;
-      const lines = text.split("\n");
-      const idx = Math.min(Math.max(line, 1), lines.length) - 1;
-      const start = lines.slice(0, idx).reduce((n, l) => n + l.length + 1, 0);
-      ta.focus();
-      ta.setSelectionRange(start, start + lines[idx].length);
-      const lineHeight = ta.scrollHeight / lines.length;
-      ta.scrollTop = Math.max(0, lineHeight * idx - ta.clientHeight / 2);
-      handlePaneScroll(rawSlot, ta);
+      const view = cmViewRef.current;
+      if (!view) return;
+      const ln = Math.min(Math.max(line, 1), view.state.doc.lines);
+      const { from, to } = view.state.doc.line(ln);
+      view.dispatch({ selection: EditorSelection.range(from, to), scrollIntoView: true });
+      view.focus();
     });
   };
 
   function insertAtCursor(snippet: string) {
-    const ta = textareaRef.current;
-    const start = ta?.selectionStart ?? text.length;
-    const end = ta?.selectionEnd ?? text.length;
-    setText(text.slice(0, start) + snippet + text.slice(end));
-    requestAnimationFrame(() => {
-      if (!ta) return;
-      ta.focus();
-      const pos = start + snippet.length;
-      ta.setSelectionRange(pos, pos);
-    });
+    const view = cmViewRef.current;
+    if (!view) return;
+    const { from, to } = view.state.selection.main;
+    view.dispatch({ changes: { from, to, insert: snippet }, selection: { anchor: from + snippet.length } });
+    view.focus();
   }
 
   function revalidate() {
@@ -271,9 +267,9 @@ export function DeckEditor(p: Props) {
               Cue cards (Raw) <span className="font-normal text-muted">({cards.length})</span>
             </h2>
             <div className="flex flex-wrap items-center gap-2">
-              {/* preventDefault on mousedown keeps focus (and selectionStart/End) on the textarea —
-                  otherwise clicking the button blurs it first and the insert falls back to appending
-                  at the very end. */}
+              {/* preventDefault on mousedown avoids a focus flicker on the editor. Not required for
+                  correctness — insertAtCursor reads CodeMirror's selection state, which survives a
+                  blur (unlike the old plain-textarea version this replaced). */}
               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertAtCursor(IMAGE_SNIPPET)} className={ghost}>Add Image</button>
               <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => insertAtCursor(ANIMATION_SNIPPET)} className={ghost}>Add Animation</button>
               {dirty && (
@@ -283,50 +279,24 @@ export function DeckEditor(p: Props) {
               )}
             </div>
           </div>
-          <div className="flex min-h-0 min-w-0 flex-1">
-            <div ref={gutterRef} aria-hidden className="select-none overflow-hidden bg-background py-3 pl-2 pr-2 text-right font-mono text-xs leading-relaxed text-muted">
-              {text.split("\n").map((_, i) => <div key={i}>{i + 1}</div>)}
-            </div>
-            <div className="relative min-h-0 min-w-0 flex-1">
-              {/* Backdrop showing through the textarea's transparent background, highlighting each
-                  card's `---` frontmatter fences, headings and img/iframe lines — the textarea
-                  itself can't style individual lines.
-                  Renders no real text (one nbsp per line, just to hold the right height): the
-                  textarea on top already shows the actual characters, so a scroll-sync lag under
-                  fast scrolling shows at most a misaligned tint, never doubled text. */}
-              <div
-                ref={highlightRef}
-                aria-hidden
-                className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre p-3 font-mono text-xs leading-relaxed"
-              >
-                {lineKinds.map((kind, i) => {
-                  const tint = fenceLines.has(i) ? "bg-brand-soft" : kind ? LINE_TINT[kind] : null;
-                  return (
-                    <div key={i} className={tint ? `-mx-3 px-3 ${tint}` : undefined}>
-                      {"\u00A0"}
-                    </div>
-                  );
-                })}
-              </div>
-              <textarea
-                ref={(el) => {
-                  textareaRef.current = el;
-                  bindContentRef(slot, el);
-                }}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onScroll={(e) => {
-                  handlePaneScroll(slot, e.currentTarget);
-                  if (highlightRef.current) {
-                    highlightRef.current.scrollTop = e.currentTarget.scrollTop;
-                    highlightRef.current.scrollLeft = e.currentTarget.scrollLeft;
-                  }
-                }}
-                spellCheck={false}
-                wrap="off"
-                className="absolute inset-0 resize-none overflow-auto whitespace-pre bg-transparent p-3 font-mono text-xs leading-relaxed outline-none"
-              />
-            </div>
+          {/* CodeMirror renders its own line-number gutter (styled via cmTheme to match the
+              custom gutter divs Script/Preview use), so this branch doesn't render
+              leftGutterRef/rightGutterRef itself — handlePaneScroll already no-ops when a
+              slot's gutter ref is unset, which it is while raw is showing there. */}
+          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+            <CodeMirror
+              value={text}
+              onChange={setText}
+              height="100%"
+              theme="none"
+              basicSetup={{ foldGutter: false, highlightActiveLine: false, highlightActiveLineGutter: false, closeBrackets: false, autocompletion: false }}
+              extensions={[mdLanguageSupport, mdSyntaxHighlighting, lineDecorationExtension(classForRawLine), cmTheme, noSpellcheck]}
+              onCreateEditor={(view) => {
+                cmViewRef.current = view;
+                bindContentRef(slot, view.scrollDOM);
+                view.scrollDOM.addEventListener("scroll", () => handlePaneScroll(slot, view.scrollDOM));
+              }}
+            />
           </div>
         </>
       );

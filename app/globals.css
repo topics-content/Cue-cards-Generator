@@ -137,3 +137,20 @@
 .md-preview th, .md-preview td { border: 1px solid var(--line); padding: 0.35em 0.7em; text-align: left; }
 .md-preview img { max-width: 100%; height: auto; border-radius: 6px; }
 .md-preview hr { border-color: var(--line); }
+
+/* Markdown syntax colouring shared by the live CodeMirror editor (DeckEditor's Raw pane) and the
+   static read-only highlighter (HighlightedMarkdown, used on the results page) — both reference
+   these exact class names via lib/markdownHighlight.ts's mdHighlightStyle. */
+.md-hl-heading { color: var(--brand); font-weight: 700; }
+.md-hl-strong { color: var(--foreground); font-weight: 700; }
+.md-hl-emphasis { color: var(--foreground); font-style: italic; }
+.md-hl-code { color: var(--accent); }
+.md-hl-link { color: var(--accent); text-decoration: underline; }
+.md-hl-quote { color: var(--muted); font-style: italic; }
+.md-hl-list { color: var(--muted); }
+.md-hl-mark { color: var(--muted); }
+.md-hl-label { color: var(--brand); }
+.md-hl-comment { color: var(--muted); font-style: italic; }
+.md-hl-tag { color: var(--brand); }
+.md-hl-attr { color: var(--accent); }
+.md-hl-value { color: var(--warn); }
