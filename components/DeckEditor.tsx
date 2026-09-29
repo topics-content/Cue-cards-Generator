@@ -7,7 +7,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
 import { Spinner } from "@/components/Spinner";
 import { IssueBox, toGroups } from "@/components/ValidationIssues";
-import { splitCards, type LineKind } from "@/lib/cards";
+import { splitCards } from "@/lib/cards";
 import { cmTheme, lineDecorationExtension, mdLanguageSupport, mdSyntaxHighlighting, noSpellcheck } from "@/lib/markdownEditor";
 import { validateMarkdown, type ValidationResult } from "@/lib/validateCards";
 import type { ReviewStatus } from "@/lib/decks";
@@ -32,17 +32,20 @@ const VIEW_OPTIONS: { value: View; label: string }[] = [
 ];
 const VIEW_LABEL: Record<View, string> = Object.fromEntries(VIEW_OPTIONS.map((o) => [o.value, o.label])) as Record<View, string>;
 
-// Per-line background classes for the raw editor's `---` fences, headings and img/iframe lines —
-// passed into lib/markdownHighlight.ts's lineDecorationExtension, which applies them inside
-// CodeMirror. Kept here (not in lib/) so Tailwind's content scan (app/ and components/ only) picks
-// up these literal class names.
-function classForRawLine(isFence: boolean, kind: LineKind): string | null {
-  if (isFence) return "bg-brand-soft";
-  if (kind === "h1") return "bg-info-soft";
-  if (kind === "h2") return "bg-info-soft opacity-80";
-  if (kind === "h3") return "bg-info-soft opacity-50";
-  if (kind === "media") return "bg-warn-soft";
-  return null;
+// Background band marking each card's `---` boundaries in the raw editor — passed into
+// lib/markdownEditor.ts's lineDecorationExtension, which applies it inside CodeMirror. Kept here
+// (not in lib/) so Tailwind's content scan (app/ and components/ only) picks up the class name.
+//
+// Headings and img/iframe lines used to get their own tints too, back when the raw pane was a plain
+// textarea and colour wasn't available. They're now amber and tag-coloured respectively via the
+// syntax palette (app/globals.css), which is how markdown editors mark them, so a second background
+// signal for the same thing just fought the text colours. Card fences keep a band because they're
+// structural to this app (HackMD has no notion of cards) and `---` alone is easy to skim past.
+// lineDecorationExtension's classFor type also passes each line's LineKind ("h1"/"h2"/"h3"/"media"/
+// null); dropped here since nothing distinguishes them any more, but that's a one-line change if
+// a heading/media tint is wanted back.
+function classForRawLine(isFence: boolean): string | null {
+  return isFence ? "bg-brand-soft" : null;
 }
 
 const IMAGE_SNIPPET = "<img src='Link of Image' width=100%>";
@@ -282,22 +285,26 @@ export function DeckEditor(p: Props) {
           {/* CodeMirror renders its own line-number gutter (styled via cmTheme to match the
               custom gutter divs Script/Preview use), so this branch doesn't render
               leftGutterRef/rightGutterRef itself — handlePaneScroll already no-ops when a
-              slot's gutter ref is unset, which it is while raw is showing there. */}
-          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-            <CodeMirror
-              value={text}
-              onChange={setText}
-              height="100%"
-              theme="none"
-              basicSetup={{ foldGutter: false, highlightActiveLine: false, highlightActiveLineGutter: false, closeBrackets: false, autocompletion: false }}
-              extensions={[mdLanguageSupport, mdSyntaxHighlighting, lineDecorationExtension(classForRawLine), cmTheme, noSpellcheck]}
-              onCreateEditor={(view) => {
-                cmViewRef.current = view;
-                bindContentRef(slot, view.scrollDOM);
-                view.scrollDOM.addEventListener("scroll", () => handlePaneScroll(slot, view.scrollDOM));
-              }}
-            />
-          </div>
+              slot's gutter ref is unset, which it is while raw is showing there.
+              className (not just height="100%") goes straight on CodeMirror's own root div: that
+              div otherwise has no defined height of its own for height="100%" to resolve against
+              (its default is auto/content-sized), so the editor grew to fit all the text with
+              nothing to scroll — min-h-0 flex-1 makes it, not just its content, an actual flex
+              item that gets a real bounded height from this flex column. */}
+          <CodeMirror
+            className="min-h-0 min-w-0 flex-1 overflow-hidden"
+            value={text}
+            onChange={setText}
+            height="100%"
+            theme="none"
+            basicSetup={{ foldGutter: false, highlightActiveLine: false, highlightActiveLineGutter: false, closeBrackets: false, autocompletion: false }}
+            extensions={[mdLanguageSupport, mdSyntaxHighlighting, lineDecorationExtension(classForRawLine), cmTheme, noSpellcheck]}
+            onCreateEditor={(view) => {
+              cmViewRef.current = view;
+              bindContentRef(slot, view.scrollDOM);
+              view.scrollDOM.addEventListener("scroll", () => handlePaneScroll(slot, view.scrollDOM));
+            }}
+          />
         </>
       );
     }

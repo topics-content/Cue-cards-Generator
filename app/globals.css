@@ -28,6 +28,22 @@
   --danger-soft: #fcebea;
   --info: #0b5fbf;
   --info-soft: #e6f0fb;
+  /* Markdown editor syntax palette (the Raw pane + read-only raw views). Warm, editor-style
+     colours in the shape real markdown editors use — amber headings, purple card fences, green
+     code/strings, blue links — rather than the app's brand green, which reads as "app chrome"
+     rather than "code". Every one is AA on both --surface and --background; see
+     tests/contrast.test.ts. */
+  --syn-heading: #9a5b00;
+  --syn-code: #2f7d32;
+  --syn-link: #0b5fbf;
+  --syn-quote: #535b65;
+  --syn-list: #a3421a;
+  --syn-tag: #a32f28;
+  --syn-attr: #8a5a00;
+  --syn-value: #2f7d32;
+  --syn-punct: #5b6570;
+  --syn-fence: #6b3fb8;
+  --syn-body: #2b3138;
   --glow: rgba(31, 92, 26, 0.08);
   color-scheme: light;
 }
@@ -54,6 +70,17 @@
   --danger-soft: #341715;
   --info: #7db4ff;
   --info-soft: #12233a;
+  --syn-heading: #ffcb6b;
+  --syn-code: #c3e88d;
+  --syn-link: #82aaff;
+  --syn-quote: #9aa3c4;
+  --syn-list: #f78c6c;
+  --syn-tag: #f07178;
+  --syn-attr: #ffcb6b;
+  --syn-value: #c3e88d;
+  --syn-punct: #89ddff;
+  --syn-fence: #c792ea;
+  --syn-body: #c3cbe0;
   --glow: rgba(198, 242, 107, 0.07);
   color-scheme: dark;
 }
@@ -81,6 +108,17 @@
     --danger-soft: #341715;
     --info: #7db4ff;
     --info-soft: #12233a;
+    --syn-heading: #ffcb6b;
+    --syn-code: #c3e88d;
+    --syn-link: #82aaff;
+    --syn-quote: #9aa3c4;
+    --syn-list: #f78c6c;
+    --syn-tag: #f07178;
+    --syn-attr: #ffcb6b;
+    --syn-value: #c3e88d;
+    --syn-punct: #89ddff;
+    --syn-fence: #c792ea;
+    --syn-body: #c3cbe0;
     --glow: rgba(198, 242, 107, 0.07);
     color-scheme: dark;
   }
@@ -141,16 +179,17 @@
 /* Markdown syntax colouring shared by the live CodeMirror editor (DeckEditor's Raw pane) and the
    static read-only highlighter (HighlightedMarkdown, used on the results page) — both reference
    these exact class names via lib/markdownHighlight.ts's mdHighlightStyle. */
-.md-hl-heading { color: var(--brand); font-weight: 700; }
-.md-hl-strong { color: var(--foreground); font-weight: 700; }
-.md-hl-emphasis { color: var(--foreground); font-style: italic; }
-.md-hl-code { color: var(--accent); }
-.md-hl-link { color: var(--accent); text-decoration: underline; }
-.md-hl-quote { color: var(--muted); font-style: italic; }
-.md-hl-list { color: var(--muted); }
-.md-hl-mark { color: var(--muted); }
-.md-hl-label { color: var(--brand); }
-.md-hl-comment { color: var(--muted); font-style: italic; }
-.md-hl-tag { color: var(--brand); }
-.md-hl-attr { color: var(--accent); }
-.md-hl-value { color: var(--warn); }
+.md-hl-heading { color: var(--syn-heading); font-weight: 700; }
+.md-hl-strong { color: var(--syn-body); font-weight: 700; }
+.md-hl-emphasis { color: var(--syn-body); font-style: italic; }
+.md-hl-code { color: var(--syn-code); }
+.md-hl-link { color: var(--syn-link); text-decoration: underline; }
+.md-hl-quote { color: var(--syn-quote); font-style: italic; }
+.md-hl-list { color: var(--syn-list); }
+.md-hl-punct { color: var(--syn-punct); }
+.md-hl-fence { color: var(--syn-fence); font-weight: 700; }
+.md-hl-label { color: var(--syn-attr); }
+.md-hl-comment { color: var(--syn-quote); font-style: italic; }
+.md-hl-tag { color: var(--syn-tag); }
+.md-hl-attr { color: var(--syn-attr); }
+.md-hl-value { color: var(--syn-value); }

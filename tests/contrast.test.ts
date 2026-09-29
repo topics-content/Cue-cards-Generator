@@ -31,6 +31,19 @@ const PAIRS: [string, string][] = [
   ["accent", "surface"], ["accent", "background"], ["accent-fg", "accent"],
   ["ok", "ok-soft"], ["warn", "warn-soft"], ["danger", "danger-soft"], ["info", "info-soft"],
   ["ok", "surface"], ["warn", "surface"], ["danger", "surface"], ["info", "surface"],
+  // Markdown syntax palette (app/globals.css's .md-hl-* rules, lib/markdownGrammar.ts) — same AA
+  // guarantee against both surfaces the raw editor/highlighted views actually render on.
+  ["syn-heading", "surface"], ["syn-heading", "background"],
+  ["syn-code", "surface"], ["syn-code", "background"],
+  ["syn-link", "surface"], ["syn-link", "background"],
+  ["syn-quote", "surface"], ["syn-quote", "background"],
+  ["syn-list", "surface"], ["syn-list", "background"],
+  ["syn-tag", "surface"], ["syn-tag", "background"],
+  ["syn-attr", "surface"], ["syn-attr", "background"],
+  ["syn-value", "surface"], ["syn-value", "background"],
+  ["syn-punct", "surface"], ["syn-punct", "background"],
+  ["syn-fence", "surface"], ["syn-fence", "background"],
+  ["syn-body", "surface"], ["syn-body", "background"],
 ];
 
 it("the two dark blocks are identical", () => {

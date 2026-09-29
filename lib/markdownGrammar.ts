@@ -40,7 +40,12 @@ export const mdHighlighter: Highlighter = tagHighlighter([
   { tag: [t.link, t.url], class: "md-hl-link" },
   { tag: t.quote, class: "md-hl-quote" },
   { tag: t.list, class: "md-hl-list" },
-  { tag: [t.processingInstruction, t.angleBracket, t.definitionOperator], class: "md-hl-mark" },
+  // No rule for t.processingInstruction on purpose: lezer-markdown gives a HeaderMark/EmphasisMark/
+  // ListMark/QuoteMark both that tag and its parent construct's tag, so leaving it unmapped lets the
+  // `##`, `**`, `>` and `*` markers take their heading/strong/quote/list colour — the way HackMD and
+  // other markdown editors colour them, instead of greying them out away from the text they mark.
+  { tag: [t.angleBracket, t.definitionOperator], class: "md-hl-punct" },
+  { tag: t.contentSeparator, class: "md-hl-fence" },
   { tag: [t.labelName, t.string], class: "md-hl-label" },
   { tag: t.comment, class: "md-hl-comment" },
   { tag: t.tagName, class: "md-hl-tag" },
