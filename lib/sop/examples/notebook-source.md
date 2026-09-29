@@ -212,6 +212,8 @@ Output:
 <function __main__.plot_softmax(z_paper=1.0, z_plastic=1.0, z_metal=1.0)>
 ```
 
+![plot-1](image-placeholder)
+
 **Ask AI:** Ask an AI assistant to explain the connection between the softmax function and the Boltzmann distribution used in statistical physics to describe the probability of a system occupying different energy states. Write down, in your own words, what the raw score $z$ corresponds to in that physical analogy.
 
 GreenSort can now turn its raw scores into three confident-looking probabilities, say 0.7 for Plastic, 0.2 for Paper, and 0.1 for Metal. But right now, $W$ and $b$ are still just the small random numbers we started with. GreenSort has no reason yet to believe these particular probabilities are any good, and no way of knowing whether this specific guess was right or badly wrong. Producing a probability is not the same as learning. Before GreenSort's weights can improve, its engineers need one more ingredient: a precise, numerical way to score exactly how wrong a given guess was, so that "wrong" becomes something a machine can react to. That is the problem we turn to next.

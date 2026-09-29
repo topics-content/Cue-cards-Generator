@@ -8,25 +8,13 @@ const FIDELITY_RULE = `CRITICAL — do not reword the script:
 - Do NOT paraphrase, summarize, shorten for style, "clean up" phrasing, add explanation the source doesn't contain, or drop stated detail.
 - The only changes allowed are structural: splitting the text into cue cards, adding headings/bullets/frontmatter/actionable formatting per the SOP, and fixing an isolated spelling typo without rephrasing the sentence it's in.
 - If a sentence could be kept as-is or improved, keep it as-is.
-- A source heading's own wording must still appear somewhere in the output — as the card's body H2, or folded into a nearby line — even when the card's title: metadata uses different, more descriptive wording per the SOP. Giving a card a better title is not permission for the source heading's own words to vanish with no trace.
+- Code, URLs, LaTeX and identifiers (table, column, function and file names) are copied byte-for-byte. Typo fixes never apply inside them. Wrapping code and identifiers in single backticks is allowed (and required for inline code and underscore words, per the SOP); the text inside stays unchanged. LaTeX is never wrapped in backticks.
+- A source heading's own wording must still appear somewhere in the output — as the card's body H2, or folded into a nearby line — even when the card's title: metadata uses different, more descriptive wording per the SOP. Giving a card a better title is not permission for the source heading's own words to vanish with no trace. The only exception is the SOP's "Lines that are dropped" list (lecture header, program line, hour banners, timing lines, document-export leftovers) — those are dropped, and timings go into duration.
+- The only image URLs allowed are ones in the source, the SOP's fixed placeholder URL, and the Unlock template's own two.
 - Never state the same piece of content twice. Carrying content over means moving it to exactly one place, not copying it into more than one card or heading — restructuring is not an excuse to repeat something.`;
-
-// Which module a deck belongs to is decided by the person creating it, on the form, before
-// generation ever starts — never guessed from the script. Without this, the model would have to
-// infer from the script's own wording whether a SOP module-specific template (the DSML DA-track
-// and DSML SQL sections) applies, which risks inserting that boilerplate into a deck it doesn't
-// belong to, or skipping it for a deck that actually needs it. Repeated in both passes so the
-// audit can check template use against the real module, not re-guess it from scratch.
-const moduleContext = (program: string, module: string) =>
-  `This deck is for program "${program}", module "${module}". The SOP's module-specific template ` +
-  `sections (currently "DSML – DA track modules only" and "DSML – SQL module only") apply ONLY when ` +
-  `this module genuinely is that named module — never because the script's content merely resembles ` +
-  `that topic. If this program/module doesn't match either named template, ignore both of them entirely.\n\n`;
 
 export function pass1Prompt(o: {
   className: string;
-  program: string;
-  module: string;
   index: number;
   total: number;
   section: string;
@@ -37,7 +25,6 @@ export function pass1Prompt(o: {
     : "";
   return (
     `${FIDELITY_RULE}\n\n` +
-    moduleContext(o.program, o.module) +
     `This is section ${o.index + 1} of ${o.total} of the lecture script "${o.className}".\n\n` +
     continuity +
     `<script_section>\n${o.section}\n</script_section>\n\n` +
@@ -48,13 +35,13 @@ export function pass1Prompt(o: {
   );
 }
 
-export function pass2Prompt(o: { program: string; module: string; section: string; draft: string; summary?: string }): string {
+export function pass2Prompt(o: { index: number; total: number; section: string; draft: string; summary?: string }): string {
   const continuity = o.summary
     ? `Continuity from the earlier sections:\n<previous>\n${o.summary}\n</previous>\n\n`
     : "";
   return (
     `${FIDELITY_RULE}\n\n` +
-    moduleContext(o.program, o.module) +
+    `This is section ${o.index + 1} of ${o.total}.\n\n` +
     continuity +
     `<source_section>\n${o.section}\n</source_section>\n\n` +
     `<draft>\n${o.draft}\n</draft>\n\n` +
@@ -73,12 +60,19 @@ export function pass2Prompt(o: { program: string; module: string; section: strin
     `headings: if a card's title is more descriptive than the heading that introduced that content in ` +
     `<source_section>, confirm the heading's own words still show up somewhere in the card (as an H2, or ` +
     `folded into a line) — a heading being replaced by a better title is not the same as its words being kept, ` +
-    `and it must not simply disappear. ` +
+    `and it must not simply disappear — except the SOP's "Lines that are dropped" list, which stays dropped. ` +
+    `Separately, check every code block, URL and formula is identical to the source, character for character ` +
+    `(added backticks aside; LaTeX must stay LaTeX, never backticked) — restore any that differ, ` +
+    `even by a single space or symbol, and make sure no math symbol is left as bare text. ` +
+    `Check each quiz question and choice matches the source exactly, punctuation included. ` +
+    `Check that each quiz with a stated answer has exactly one [x] and an explanation card opening with ` +
+    `**Correct Answer:** and the option text, without the letter. ` +
+    `Replace any other image URL with the SOP's placeholder URL, and make sure no source image was dropped. ` +
+    `Check every source table appears as a GFM table with all its rows and columns — never as an image or a list. ` +
     `Separately, check for content stated more than once — the same sentence, code block, heading, or bullet ` +
     `appearing in two places in the draft; keep the one copy in the right place and delete the rest. ` +
-    `Also check any SOP module-specific template (DSML DA-track, DSML SQL) was applied only if this deck's ` +
-    `program/module actually matches it, and wasn't skipped if it does — per the module stated above, not ` +
-    `guessed from the script. ` +
+    `Also check the SOP's Unlock Assignment card appears only where the source section has an ` +
+    `unlock-assignment part, and isn't missing where it does. ` +
     `Output only the corrected HackMD markdown, with no commentary, starting directly with the first ` +
     `card's ` + "`---`" + ` frontmatter. Do not wrap your reply in a \`\`\`markdown or \`\`\` code fence, ` +
     `even if the draft above has one — remove it. Code fences belong only inside a card, around actual code.`

@@ -53,6 +53,29 @@ export function frontmatterFenceLines(text: string): Set<number> {
   return fenceLines;
 }
 
+export type LineKind = "h1" | "h2" | "h3" | "media" | null;
+
+/**
+ * Per-line markup kind for tinting a raw editor: headings by level (H3–H6 share one tint) and
+ * `<img`/`<iframe` lines. Lines inside ``` code fences are skipped, so a `# comment` in code
+ * isn't mistaken for a heading.
+ */
+export function markupLineKinds(text: string): LineKind[] {
+  let inFence = false;
+  return text.split("\n").map((line) => {
+    const t = line.trim();
+    if (t.startsWith("```")) {
+      inFence = !inFence;
+      return null;
+    }
+    if (inFence) return null;
+    const h = t.match(/^(#{1,6})\s+\S/);
+    if (h) return h[1].length === 1 ? "h1" : h[1].length === 2 ? "h2" : "h3";
+    if (/<(img|iframe)\b/i.test(t)) return "media";
+    return null;
+  });
+}
+
 /**
  * Some models wrap their whole reply in a single ```markdown ... ``` fence despite being told to
  * output raw markdown with no commentary — harmless in the model's own preview, but the literal
@@ -77,6 +100,29 @@ export function stripOuterFence(text: string): string {
 
   const inner = lines.slice(start + 1, end).join("\n");
   return inner.trim() ? inner : text;
+}
+
+export const TABLE_STYLE = `<style>
+table { border-collapse: collapse; }
+table th, table td { border: 1px solid #94a3b8; padding: 6px 10px; }
+table th { background:#1e3a8a; color:white; }
+table td:nth-child(2) { font-weight:bold; }
+</style>`;
+
+/**
+ * The table <style> block is a whole-file rule, but generation runs one section at a time — so the
+ * model is told never to write it, and it's added here after the sections are merged: once, right
+ * after the first card's closing `---` (anything before that `---` would break the first card's
+ * frontmatter). Any <style> block the model wrote anyway is removed first. Files with no GFM table
+ * (outside code fences) get none.
+ */
+export function addTableStyle(text: string): string {
+  const stripped = text.replace(/\n*<style>[\s\S]*?<\/style>\n*/g, "\n\n");
+  const outsideCode = stripped.replace(/^```[\s\S]*?^```/gm, "");
+  const hasTable = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/m.test(outsideCode);
+  const first = frontmatterStarts(stripped)[0];
+  if (!hasTable || !first) return stripped;
+  return stripped.slice(0, first.end) + "\n" + TABLE_STYLE + "\n\n" + stripped.slice(first.end).replace(/^\n+/, "");
 }
 
 export function splitCards(text: string): Card[] {

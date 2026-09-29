@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { splitCards, stripOuterFence } from "@/lib/cards";
+import { addTableStyle, markupLineKinds, splitCards, stripOuterFence, TABLE_STYLE } from "@/lib/cards";
 
 const card = (title: string, type = "cue_card") =>
   `---\ntitle: ${title}\ndescription: d\nduration: 60\ncard_type: ${type}\n---\n\n# ${title}\n\nBody of ${title}\n`;
@@ -35,7 +35,7 @@ describe("splitCards", () => {
 
   it("finds every card in the real golden examples", () => {
     for (const [file, cue, quiz] of [
-      ["prose-cards", 21, 5],
+      ["prose-cards", 20, 5],
       ["notebook-cards", 21, 5],
     ] as const) {
       const cards = splitCards(readFileSync(`lib/sop/examples/${file}.md`, "utf8"));
@@ -86,5 +86,35 @@ describe("stripOuterFence", () => {
     // Simulates two sections saved independently, one of which the model wrapped.
     const clean = stripOuterFence(card) + "\n\n" + stripOuterFence(wrapped("```markdown"));
     expect(clean).not.toContain("```markdown");
+  });
+});
+
+describe("markupLineKinds", () => {
+  it("tags headings by level and img/iframe lines, skipping code fences", () => {
+    const text = ["# One", "## Two", "#### Four", "<img src='x' width=100%>", "```python", "# comment", "```", "plain", "#nospace"].join("\n");
+    expect(markupLineKinds(text)).toEqual(["h1", "h2", "h3", "media", null, null, null, null, null]);
+  });
+});
+
+describe("addTableStyle", () => {
+  const fm = (t: string) => `---\ntitle: ${t}\ndescription: d\nduration: 60\ncard_type: cue_card\n---\n`;
+  const table = "| a | b |\n| --- | --- |\n| 1 | 2 |\n";
+
+  it("adds one style block right after the first card's frontmatter when a table exists", () => {
+    const out = addTableStyle(fm("One") + "\n## One\n\n" + fm("Two") + "\n" + table);
+    expect(out.split("<style>")).toHaveLength(2);
+    expect(out.indexOf(TABLE_STYLE)).toBeGreaterThan(out.indexOf("card_type"));
+    expect(out.indexOf(TABLE_STYLE)).toBeLessThan(out.indexOf("## One"));
+  });
+
+  it("replaces style blocks the model wrote with the single canonical one", () => {
+    const out = addTableStyle(fm("One") + "\n<style>x{}</style>\n\n" + table + "\n<style>y{}</style>\n");
+    expect(out.split("<style>")).toHaveLength(2);
+    expect(out).toContain(TABLE_STYLE);
+  });
+
+  it("adds nothing without a table, and ignores table-like lines inside code fences", () => {
+    expect(addTableStyle(fm("One") + "\nplain\n")).not.toContain("<style>");
+    expect(addTableStyle(fm("One") + "\n```text\n" + table + "```\n")).not.toContain("<style>");
   });
 });

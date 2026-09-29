@@ -50,3 +50,21 @@ describe("parseNotebook edge cases", () => {
     expect(() => parseNotebook("{}")).toThrow(/No cells/);
   });
 });
+
+describe("parseNotebook markdown-cell attachments", () => {
+  it("turns attached images into numbered placeholders, in order with image outputs", () => {
+    const nb = {
+      cells: [
+        { cell_type: "markdown", source: ["Intro\n", "![diagram.png](attachment:diagram.png)\n", '<img src="attachment:b.png" width=300>'] },
+        { cell_type: "code", source: "plot()", outputs: [{ output_type: "display_data", data: { "image/png": "iVBOR", "text/plain": "<Figure>" } }] },
+        { cell_type: "markdown", source: "Real one: ![x](https://example.com/a.png)" },
+      ],
+    };
+    const { text, imageCount } = parseNotebook(JSON.stringify(nb));
+    expect(text).not.toContain("attachment:");
+    expect(imageCount).toBe(3);
+    expect(text.indexOf("![plot-1]")).toBeLessThan(text.indexOf("![plot-2]"));
+    expect(text.indexOf("![plot-2]")).toBeLessThan(text.indexOf("![plot-3]"));
+    expect(text).toContain("![x](https://example.com/a.png)"); // real URLs are left alone
+  });
+});

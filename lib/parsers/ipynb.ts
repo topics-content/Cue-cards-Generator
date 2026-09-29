@@ -6,6 +6,9 @@ const ANSI = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*[A-Za-z]", "g");
 // Catches base64 that leaks into text: data URIs, or a long unbroken base64-looking run.
 const DATA_URI = /data:[\w.+-]+\/[\w.+-]+;base64,[A-Za-z0-9+/=\s]+/g;
 const LONG_B64 = /[A-Za-z0-9+/]{400,}={0,2}/g;
+// An image dragged into a markdown cell is stored as `attachment:<name>`, not a real URL — HackMD
+// can't show it, so it's treated like any other embedded image.
+const ATTACHMENT_IMG = /!\[[^\]]*\]\(\s*<?attachment:[^)]*\)|<img\b[^>]*\bsrc\s*=\s*["']?attachment:[^>]*>/gi;
 
 const joinLines = (v: unknown): string =>
   Array.isArray(v) ? v.join("") : typeof v === "string" ? v : "";
@@ -22,7 +25,8 @@ type Cell = {
 
 /**
  * Turns a notebook into markdown-ish text for the LLM.
- * Keeps cell sources and text outputs; every image output becomes `![plot-N](image-placeholder)`.
+ * Keeps cell sources and text outputs; every image output, and every image attached to a markdown
+ * cell (`attachment:<name>`), becomes `![plot-N](image-placeholder)`.
  * Image bytes never leave this function.
  */
 export function parseNotebook(raw: string): NotebookResult {
@@ -43,7 +47,8 @@ export function parseNotebook(raw: string): NotebookResult {
   for (const cell of nb.cells) {
     const source = scrub(joinLines(cell.source)).trimEnd();
     if (cell.cell_type === "markdown") {
-      if (source) blocks.push(source);
+      const md = source.replace(ATTACHMENT_IMG, placeholder);
+      if (md) blocks.push(md);
     } else if (cell.cell_type === "code") {
       if (source) blocks.push("```python\n" + source + "\n```");
       for (const out of cell.outputs ?? []) {

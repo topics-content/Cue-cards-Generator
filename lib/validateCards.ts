@@ -174,7 +174,7 @@ function validateCard(lines: string[], c: CardSpan): { errors: Issue[]; warnings
   if (cardType === "cue_card") {
     if (bodyText === "") errors.push({ line: c.close + 2, msg: "Cue card has no content after the metadata.", hint: "Add the markdown body for this card." });
     else if (!body.some((l) => headRe.test(l.trim())))
-      warnings.push({ line: c.close + 2, msg: "Cue card body has no markdown heading.", hint: "Start the content with a \"# Heading\" matching the title." });
+      warnings.push({ line: c.close + 2, msg: "Cue card body has no markdown heading.", hint: "Start the content with a \"## Heading\"." });
   }
 
   if (cardType === "quiz_card") {

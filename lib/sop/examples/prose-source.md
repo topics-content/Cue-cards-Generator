@@ -61,6 +61,7 @@ Instructor:  Imagine you are a Zomato analyst. The orders table has 10 million r
 Instructor:  Without filtering — what do you do? Open the table, scroll through 10 million rows?
 Learner:  (laughter, 'that's impossible')
 Instructor:  Exactly. Filtering is not an optional feature. It is the entire job. Every answer an analyst gives is a filtered view of the data. WHERE is how you do it.
+![plot-1](image-placeholder)
 
 
   
@@ -74,6 +75,7 @@ How every analyst question maps to a WHERE clause
 'Coupons with NEW in the code'   →  WHERE coupon_code LIKE \'NEW%\'
 Today you learn all five of those translations.
 A query without a WHERE clause is like a search engine with no search box. It returns everything  —  which is useless.
+![plot-2](image-placeholder)
   
 
 We know we need to filter, but to do that, we need a way to tell the database 'bigger than', 'smaller than', or 'exactly this. ' Luckily, you already know most of this language from school maths. Let’s quickly refresh those symbols so we can start building our first real conditions.
@@ -107,6 +109,7 @@ One thing to remember about text vs numbers:
 Numbers: no quotes. WHERE order_value > 300
 Text: always in single quotes. WHERE city = \'Bangalore\'
 Common mistake: WHERE order_value > \'300\' — this compares text, not numbers. It may still run but gives wrong results.
+![plot-3](image-placeholder)
   
 
 Now that we have our symbols, let's put them to work. The WHERE clause is the heart of every analyst’s day. It’s the gatekeeper—only the rows that meet your rules get to pass through to your report. Let’s head into BigQuery and start pulling out only the orders we actually care about.
@@ -158,6 +161,7 @@ If yes — include it in the result.  If no — skip it.
 This happens before any SELECT logic.  The filter runs first.
 Order of execution:  FROM  →  WHERE  →  SELECT.  Not left to right as written.
 WHERE runs before SELECT.  The filter happens before the database decides what to show you.
+![plot-4](image-placeholder)
   
 
 Filtering for one thing is easy, but business questions are usually more complex. Your manager won't just ask for 'cancelled orders'; they'll ask for 'cancelled orders above 500 rupees.' To answer that, we need to learn how to stack our conditions using AND, OR, and NOT.
@@ -214,6 +218,7 @@ SELECT  order_id,  order_status
 FROM    zomato.orders
 WHERE   order_status != 'cancelled';
 	Reads as:  All orders where status is anything except cancelled.
+![plot-5](image-placeholder)
   
 
 AND vs OR — the one that trips everyone
@@ -264,6 +269,7 @@ SELECT  order_id,
 FROM    zomato.orders
 WHERE   order_status NOT IN ('in_transit', 'cancelled');
 	Reads as:  Show orders where status is neither 'in_transit' nor 'cancelled' — exclude any value from that list.
+![plot-6](image-placeholder)
   
 
 BETWEEN — match a range of values
@@ -373,6 +379,7 @@ NULL VS BLANK  and  TRIM
 
 
 Instructor Note - Show this on screen: Ignore 3/4 from link - 1 https://querycanvas-scaler-55oa.onrender.com/q/2a6d9f3c8b1e5047
+![plot-7](image-placeholder)
   
 
 * If someone asked you to find all coupon_code that didn't have values, you might also want to check for blank strings, which would equal "", or rows where someone entered a space or any number of spaces into that field.
@@ -387,9 +394,12 @@ FROM    zomato.orders
 WHERE   coupon_code IS NULL
    OR   TRIM(coupon_code) = '';
 	Reads as:  Show all orders where no coupon was applied — either the coupon field was never filled in, or it was entered as blank or spaces. 
+![plot-8](image-placeholder)
   
 
 Instructor cue  You will see TRIM() concept in detail in Lec- 4, pls check understand the above query, such that you understand the null vs blank logic using trim.
+![plot-9](image-placeholder)
+![plot-10](image-placeholder)
   
 
   
@@ -411,6 +421,8 @@ Does something to it  —  rounds it, formats it, cleans it.
 Returns the transformed value in your result.
 Runs on every row automatically.  No loops.  No scripts.
 Syntax:  FUNCTION_NAME(column_name)  or  FUNCTION_NAME(column_name, argument)
+![plot-11](image-placeholder)
+![plot-12](image-placeholder)
 
 
   
@@ -464,6 +476,7 @@ SELECT  order_id,
 FROM    zomato.orders
 LIMIT   10;
 	Reads as:  Create a new column that combines order_id, a dash, and the status — all in one string.
+![plot-13](image-placeholder)
   
 
 Type this with me  CONCAT works with any text — mix columns and fixed strings:
@@ -497,6 +510,7 @@ FROM    zomato.orders
 WHERE   LOWER(order_status) = 'delivered'
 LIMIT   10;
 	Reads as:  Show delivered orders — converting status to lowercase before comparing, so 'Delivered' and 'DELIVERED' both match.
+![plot-14](image-placeholder)
   
 
 Type this with me  UPPER works the same way — useful for display labels:
@@ -577,6 +591,7 @@ FROM    zomato.orders
 WHERE   coupon_code IS NOT NULL
   AND   coupon_code NOT LIKE 'NEW%';
 	Reads as:  Orders that used a coupon — but not a NEW coupon.
+![plot-15](image-placeholder)
   
 
 
@@ -603,6 +618,7 @@ LIKE \'value%\' (prefix match) is fast — it can use indexes.
 In production with millions of rows, avoid leading % patterns if performance matters.
 For analytics on a DW like BigQuery — less of a concern.  Still good to know.
 % matches anything.  _ matches one character.  LIKE is how you search when you only know part of the value.
+![plot-16](image-placeholder)
   
 
 
@@ -633,6 +649,7 @@ Bug 2:  payment_method = \'UPI\' AND payment_method = \'Debit Card\'  should be 
         A single row cannot have two different payment methods simultaneously.
 Bug 3:  BETWEEN \'200\' AND \'500\'  —  number in quotes makes this a text comparison.
         Should be  BETWEEN 200 AND 500  (no quotes).
+![plot-17](image-placeholder)
 
 
   

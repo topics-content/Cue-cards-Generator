@@ -14,7 +14,7 @@ import { splitSections } from "../lib/chunk";
 import { pass1Prompt, pass2Prompt, runningSummary } from "../lib/prompts";
 import { chat, type SystemBlock } from "../lib/openrouter";
 import type { Usage } from "../lib/usage";
-import { stripOuterFence } from "../lib/cards";
+import { addTableStyle, stripOuterFence } from "../lib/cards";
 import { validateMarkdown } from "../lib/validateCards";
 
 const DEFAULT_MODELS = ["anthropic/claude-sonnet-4.6", "anthropic/claude-sonnet-5"];
@@ -91,8 +91,8 @@ async function runModel(model: string, className: string, sections: string[], sy
   try {
     for (let i = 0; i < sections.length; i++) {
       const summary = runningSummary(done);
-      const draft = await call({ system, user: pass1Prompt({ className, program: "Eval", module: "Eval", index: i, total: sections.length, section: sections[i], summary }) });
-      const audit = await call({ system, user: pass2Prompt({ program: "Eval", module: "Eval", section: sections[i], draft: draft.text, summary }), reasoningEffort: "low" });
+      const draft = await call({ system, user: pass1Prompt({ className, index: i, total: sections.length, section: sections[i], summary }) });
+      const audit = await call({ system, user: pass2Prompt({ index: i, total: sections.length, section: sections[i], draft: draft.text, summary }), reasoningEffort: "low" });
       for (const u of [draft.usage, audit.usage]) {
         row.inTok += u.inputTokens;
         row.outTok += u.outputTokens;
@@ -100,7 +100,7 @@ async function runModel(model: string, className: string, sections: string[], sy
       }
       done.push(stripOuterFence(audit.text));
     }
-    const md = done.join("\n\n");
+    const md = addTableStyle(done.join("\n\n"));
     const v = validateMarkdown(md);
     Object.assign(row, { cards: v.cardCount, errors: v.totalErrors, warnings: v.totalWarnings });
     writeFileSync(path.join(outDir, `${model.replace(/[/:]/g, "_")}.md`), md);

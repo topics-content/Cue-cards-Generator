@@ -5,7 +5,7 @@ duration: 180
 card_type: cue_card
 ---
 
-## <span style="background-color: red;">Agenda ( for instructor only) </span>
+## <span style="background-color: red;">Agenda (for instructor only)</span>
 
 - Understand why a single-output classifier is not enough when there are more than two categories to choose from
 - Learn the notation used to describe a small neural network: inputs, weights, bias, neurons, and outputs
@@ -57,7 +57,13 @@ A model built out of multiple neurons working together like this is called a **N
 
 Here is a simple flow of what we are building, drawn as a diagram in text since we are not using images in this session:
 
-<img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/229/934/original/Screenshot_2026-09-16_172910.png?1789559960" width="600"/>
+```text=
+                    +--------> f_Paper   (neuron 1)  --> a_1
+                    |
+ Sensors (x1, x2) --+--------> f_Plastic (neuron 2)  --> a_2
+                    |
+                    +--------> f_Metal   (neuron 3)  --> a_3
+```
 
 
 Each of the two sensor readings is sent to all three neurons. Each neuron produces its own output, based on its own weights and bias.
@@ -91,7 +97,7 @@ card_type: quiz_card
 
 GreenSort has 2 sensor readings and needs to sort items into 3 bins.
 
-How many weight parameters (w) will the network need in total, excluding biases?
+How many weight parameters ($w$) will the network need in total, excluding biases?
 
 # Choices
 
@@ -108,6 +114,8 @@ card_type: cue_card
 ---
 
 ## Quiz 1 Explanation
+
+**Correct Answer:** 6
 
 **Explanation:** Each of the 2 features connects to each of the 3 neurons, giving $2 \times 3 = 6$ weights: $w_{11}, w_{12}, w_{13}, w_{21}, w_{22}, w_{23}$. Each neuron additionally has its own bias, but the question only asked about weights.
 
@@ -162,11 +170,13 @@ card_type: cue_card
 
 ## Quiz 2 Explanation
 
+**Correct Answer:** 12 × 3
+
 **Explanation:** Matrix multiplication of an (m × d) matrix with a (d × n) matrix produces an (m × n) matrix. Here, m = 12 items and n = 3 neurons, so Z has shape 12 × 3: one raw score per item for each of the 3 bins. Adding the bias b does not change this shape, since it is broadcast across all 12 rows.
 
-This single equation, Z=XW+b, is worth remembering carefully. It is not just specific to GreenSort's three bins. This is the same core computation that sits inside every layer of most modern neural networks, including the very large ones used in image recognition and language models, just with far larger values of d and n.
+This single equation, $Z = XW + b$, is worth remembering carefully. It is not just specific to GreenSort's three bins. This is the same core computation that sits inside every layer of most modern neural networks, including the very large ones used in image recognition and language models, just with far larger values of $d$ and $n$.
 
-GreenSort can now compute all three raw scores, z_Paper, z_Plastic, z_Metal, for an entire batch of items in one matrix operation. But notice that a raw score is still just a plain real number: it could be 3.2, or -1.7, or 0. Nothing about it yet forces GreenSort to make one clear, consistent choice among the three bins, and nothing stops all three scores from looking equally plausible, or equally implausible. Producing a raw number is not the same as making a decision. That gap, turning three unconstrained numbers into one confident, consistent choice, is exactly what we solve next.
+GreenSort can now compute all three raw scores, $z_{\text{Paper}}$, $z_{\text{Plastic}}$, $z_{\text{Metal}}$, for an entire batch of items in one matrix operation. But notice that a raw score is still just a plain real number: it could be 3.2, or -1.7, or 0. Nothing about it yet forces GreenSort to make one clear, consistent choice among the three bins, and nothing stops all three scores from looking equally plausible, or equally implausible. Producing a raw number is not the same as making a decision. That gap, turning three unconstrained numbers into one confident, consistent choice, is exactly what we solve next.
 
 ---
 title: Section 3 From Raw Scores to a Fair Vote
@@ -177,7 +187,7 @@ card_type: cue_card
 
 ## Section 3: From Raw Scores to a Fair Vote
 
-We now have three raw scores per item, `z1`, `z2`, and `z3`, one from each neuron. The natural instinct is to squash each of them independently with a sigmoid function, the same way we did for a single yes/no decision.
+We now have three raw scores per item, $z_1$, $z_2$, and $z_3$, one from each neuron. The natural instinct is to squash each of them independently with a sigmoid function, the same way we did for a single yes/no decision.
 
 <span style="color: violet;">Question: What goes wrong if we apply sigmoid independently to each `zj`?</span>
 
@@ -187,13 +197,13 @@ We need a function that takes in `z1, z2, z3` and returns three numbers that are
 
 ### The Softmax Function
 
-$$ p_j = \frac{e^{z_j}}{\sum_{k=1}^{n} e^{z_k}} $$
+$$p_j = \frac{e^{z_j}}{\sum_{k=1}^{n} e^{z_k}}$$
 
-Here `p_j` is the probability assigned to class `j` (in our case, `j` is Paper, Plastic, or Metal), `z_j` is that class's raw score, and the denominator sums `e^{z_k}` over all `n` classes so that the results add up to 1.
+Here $p_j$ is the probability assigned to class $j$ (in our case, $j$ is Paper, Plastic, or Metal), $z_j$ is that class's raw score, and the denominator sums $e^{z_k}$ over all $n$ classes so that the results add up to 1.
 
-<span style="color: violet;">Question: Why raise `z` to the power of `e`, rather than simply dividing each `zj` by the sum of all the z values?</span>
+<span style="color: violet;">Question: Why raise $z$ to the power of $e$, rather than simply dividing each $z_j$ by the sum of all the $z$ values?</span>
 
-Raw scores `zj` can be negative, since they come from a plain linear combination of inputs and weights. A probability cannot be negative, so we first need every value to become positive. Exponentiating does exactly that: `e^z` is always positive, however negative `z` is. It also has a useful side effect: think of it as a confidence amplifier. If GreenSort's Metal neuron produces a noticeably larger raw score than the other two, exponentiation stretches that gap further, so the final probability for Metal grows disproportionately more, giving the network a way to express strong confidence rather than only a mild preference.
+Raw scores $z_j$ can be negative, since they come from a plain linear combination of inputs and weights. A probability cannot be negative, so we first need every value to become positive. Exponentiating does exactly that: $e^{z}$ is always positive, however negative $z$ is. It also has a useful side effect: think of it as a confidence amplifier. If GreenSort's Metal neuron produces a noticeably larger raw score than the other two, exponentiation stretches that gap further, so the final probability for Metal grows disproportionately more, giving the network a way to express strong confidence rather than only a mild preference.
 
 Once every score is positive, dividing each one by the total simply rescales the three numbers so that they add up to exactly 1.
 We interpret these normalized outputs as the model's predicted probabilities. Whether those probabilities are well calibrated is a separate question.
@@ -207,7 +217,7 @@ card_type: quiz_card
 
 # Question
 
-GreenSort's three neurons output raw scores z_Paper = 2, z_Plastic = 1, z_Metal = 0.
+GreenSort's three neurons output raw scores `z_Paper = 2`, `z_Plastic = 1`, `z_Metal = 0`.
 
 Which bin will receive the highest softmax probability?
 
@@ -227,7 +237,9 @@ card_type: cue_card
 
 ## Quiz 3 Explanation
 
-**Explanation:** Softmax is a monotonic function of the raw scores: the larger the input z, the larger the resulting probability. Since z_Paper = 2 is the largest of the three scores, Paper receives the largest probability once the scores are exponentiated and normalized, even without computing the exact numbers.
+**Correct Answer:** Paper
+
+**Explanation:** Softmax is a monotonic function of the raw scores: the larger the input `z`, the larger the resulting probability. Since `z_Paper = 2` is the largest of the three scores, Paper receives the largest probability once the scores are exponentiated and normalized, even without computing the exact numbers.
 
 ---
 title: Interactive Playground Softmax Slider
@@ -237,8 +249,6 @@ card_type: cue_card
 ---
 
 ## Interactive playground
-
-Visualise how softmax redistributes confidence.
 
 ```python=
 # Interactive Playground: Watching Softmax Redistribute Confidence
@@ -284,10 +294,7 @@ interact(
 )
 ```
 
-<img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/229/981/original/Screenshot_2026-09-16_175124.png?1789561293" width="600" />
-
-<span style="background-color: red;color: White;">Instructor Note:</span>
-Run this cell to reveal the interactive sliders. Move each slider to change the raw score for Paper, Plastic, and Metal, and show learners how the softmax probabilities on the right always stay non-negative and sum to 1, even as the raw scores on the left go negative or change freely.
+<img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/243/122/original/Screenshot_2026-09-28_at_18.15.19.png?1790599543" alt="image-1" width="500" />
 
 ---
 title: Ask AI Softmax and Boltzmann Distribution
@@ -298,9 +305,9 @@ card_type: cue_card
 
 ## Ask AI Softmax and Boltzmann Distribution
 
-**Ask AI:** Ask an AI assistant to explain the connection between the softmax function and the Boltzmann distribution used in statistical physics to describe the probability of a system occupying different energy states. Write down, in your own words, what the raw score z corresponds to in that physical analogy.
+**Ask AI:** Ask an AI assistant to explain the connection between the softmax function and the Boltzmann distribution used in statistical physics to describe the probability of a system occupying different energy states. Write down, in your own words, what the raw score $z$ corresponds to in that physical analogy.
 
-GreenSort can now turn its raw scores into three confident-looking probabilities, say 0.7 for Plastic, 0.2 for Paper, and 0.1 for Metal. But right now, W and b are still just the small random numbers we started with. GreenSort has no reason yet to believe these particular probabilities are any good, and no way of knowing whether this specific guess was right or badly wrong. Producing a probability is not the same as learning. Before GreenSort's weights can improve, its engineers need one more ingredient: a precise, numerical way to score exactly how wrong a given guess was, so that "wrong" becomes something a machine can react to. That is the problem we turn to next.
+GreenSort can now turn its raw scores into three confident-looking probabilities, say 0.7 for Plastic, 0.2 for Paper, and 0.1 for Metal. But right now, $W$ and $b$ are still just the small random numbers we started with. GreenSort has no reason yet to believe these particular probabilities are any good, and no way of knowing whether this specific guess was right or badly wrong. Producing a probability is not the same as learning. Before GreenSort's weights can improve, its engineers need one more ingredient: a precise, numerical way to score exactly how wrong a given guess was, so that "wrong" becomes something a machine can react to. That is the problem we turn to next.
 
 ---
 title: Section 4 Measuring How Wrong GreenSort Was
@@ -317,37 +324,37 @@ GreenSort now produces a probability for each bin. To train it, we need a way to
 
 We used **log loss**, defined for a single item as:
 
-$$ \text{Log-loss}_i = -\big[y_i \cdot \log(\hat{y}_i) + (1 - y_i) \cdot \log(1 - \hat{y}_i)\big] $$
+$$\text{Log-loss}_i = -\big[y_i \cdot \log(\hat{y}_i) + (1 - y_i) \cdot \log(1 - \hat{y}_i)\big]$$
 
-where `y_i` is the true label (0 or 1) and `ŷ_i` is the predicted probability of the positive class.
+where $y_i$ is the true label (0 or 1) and $\hat{y}_i$ is the predicted probability of the positive class.
 
 <span style="color: violet;">Question: Can we reuse this same log loss directly for our three-bin problem?</span>
 
-No. Log loss is written specifically for two outcomes, since `ŷ_i` there represents the probability of belonging to exactly one class, with the other probability inferred as `1 - ŷ_i`. With three bins, we need a loss that can handle all `n` classes at once.
+No. Log loss is written specifically for two outcomes, since $\hat{y}_i$ there represents the probability of belonging to exactly one class, with the other probability inferred as $1 - \hat{y}_i$. With three bins, we need a loss that can handle all $n$ classes at once.
 
 ### Building Categorical Cross-Entropy
 
-First, we need a way to represent the true bin of an item numerically. We use **one-hot encoding**: if item `i` truly belongs to class `j`, then `y_{ij} = 1` and `y_{ik} = 0` for every other class `k`. For example, if an item is truly Plastic (say, class 2 out of Paper, Plastic, Metal), then `y_i = [0, 1, 0]`.
+First, we need a way to represent the true bin of an item numerically. We use **one-hot encoding**: if item $i$ truly belongs to class $j$, then $y_{ij} = 1$ and $y_{ik} = 0$ for every other class $k$. For example, if an item is truly Plastic (say, class 2 out of Paper, Plastic, Metal), then $y_i = [0, 1, 0]$.
 
-The **Categorical Cross-Entropy** for item `i`, across `k` total classes, is then defined as:
+The **Categorical Cross-Entropy** for item $i$, across $k$ total classes, is then defined as:
 
-$$ CE_i = -\sum_{j=1}^{k} y_{ij} \log(p_{ij}) $$
+$$CE_i = -\sum_{j=1}^{k} y_{ij} \log(p_{ij})$$
 
-where `p_{ij}` is the predicted probability, from softmax, that item `i` belongs to class `j`.
+where $p_{ij}$ is the predicted probability, from softmax, that item $i$ belongs to class $j$.
 
-Notice what happens because of one-hot encoding: since `y_{ij} = 0` for every class except the true one, every term in that sum vanishes except the term for the true class. So the formula quietly collapses down to:
+Notice what happens because of one-hot encoding: since $y_{ij} = 0$ for every class except the true one, every term in that sum vanishes except the term for the true class. So the formula quietly collapses down to:
 
-$$ CE_i = -\log(p_{i,\text{true class}}) $$
+$$CE_i = -\log(p_{i,\text{true class}})$$
 
-In other words, we only ever look at the probability the network assigned to the *correct* bin, and penalize it for being small. If GreenSort was highly confident and correct, `p` is close to 1, and `-log(p)` is close to 0, a very small penalty. If GreenSort was confident but wrong, `p` for the true class is close to 0, and `-log(p)` grows very large, a steep penalty.
+In other words, we only ever look at the probability the network assigned to the *correct* bin, and penalize it for being small. If GreenSort was highly confident and correct, $p$ is close to 1, and $-\log(p)$ is close to 0, a very small penalty. If GreenSort was confident but wrong, $p$ for the true class is close to 0, and $-\log(p)$ grows very large, a steep penalty.
 
-<span style="color: violet;">Question: What happens to Categorical Cross-Entropy when there are exactly k = 2 classes?</span>
+<span style="color: violet;">Question: What happens to Categorical Cross-Entropy when there are exactly $k = 2$ classes?</span>
 
 With two classes, class 1 and class 2, the formula becomes:
 
-$$ CE_i = -\big[y_{i1}\log(p_{i1}) + y_{i2}\log(p_{i2})\big] $$
+$$CE_i = -\big[y_{i1}\log(p_{i1}) + y_{i2}\log(p_{i2})\big]$$
 
-which, once you substitute `y_{i2} = 1 - y_{i1}` and `p_{i2} = 1 - p_{i1}`, is algebraically identical to the log loss we already knew from Logistic Regression. Log loss is, in fact, also known as **Binary Cross-Entropy**, the two-class special case of the more general formula we just derived.
+which, once you substitute $y_{i2} = 1 - y_{i1}$ and $p_{i2} = 1 - p_{i1}$, is algebraically identical to the log loss we already knew from Logistic Regression. Log loss is, in fact, also known as **Binary Cross-Entropy**, the two-class special case of the more general formula we just derived.
 
 ---
 title: Quiz 4
@@ -379,6 +386,8 @@ card_type: cue_card
 ---
 
 ## Quiz 4 Explanation
+
+**Correct Answer:** -log(0.5)
 
 **Explanation:** Because of one-hot encoding, every term in the sum is multiplied by either 0 or 1. Only the term for the true class, Plastic, survives, since `y_Plastic = 1` and the other `y` values are 0. So the loss is simply `-log(p_Plastic) = -log(0.5)`.
 
@@ -508,7 +517,7 @@ card_type: cue_card
 
 ## Quiz 5 Explanation
 
-**Correct Answer: B. How J changes with respect to P, i.e. dJ/dP**
+**Correct Answer:** How J changes with respect to P, i.e. dJ/dP
 
 **Explanation:** Backward propagation traces the computational graph in reverse, starting from the loss J and working backward. The very first quantity available is how J changes with respect to the node immediately before it, P, since J was computed directly from P. Every earlier partial derivative, including the one for W, is obtained by multiplying this term with further terms further back along the chain.
 
@@ -532,9 +541,6 @@ card_type: cue_card
 
 ## Interactive playground
 Visualise Forward and backward propagation
-<span style="background-color: red;color: White;">**[Instructor Note]:**</span> 
-* Link to Animation : [Click here](https://shrijankumar1-maker.github.io/NN-visualiser/)
-* Explain using this link to learners
 
 <iframe src="https://shrijankumar1-maker.github.io/NN-visualiser/" width="100%" height="1000" style="border:1px solid #ccc; border-radius:8px;"></iframe>
 

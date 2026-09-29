@@ -1,4 +1,5 @@
 import "server-only";
+import { addTableStyle } from "@/lib/cards";
 import { db } from "@/lib/db";
 import type { Usage } from "@/lib/usage";
 
@@ -284,7 +285,8 @@ export async function finalizeDeck(deckId: string, status: DeckRow["status"]) {
     .not("output_md", "eq", "")
     .order("section_index");
   if (error) throw error;
-  const output = data.map((r) => r.output_md.trim()).join("\n\n");
+  // The table <style> block is file-wide, so it can only be added once every section is in.
+  const output = addTableStyle(data.map((r) => r.output_md.trim()).join("\n\n"));
   // Any reservation left over (e.g. a call that never got to release, on a crash) can't outlive the run.
   // finished_at is overwritten on every call, including a later resume's completion — it tracks
   // "when this run last stopped", which is what "time taken" on the observatory table means.

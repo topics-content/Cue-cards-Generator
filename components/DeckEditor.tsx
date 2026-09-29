@@ -5,7 +5,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
 import { Spinner } from "@/components/Spinner";
 import { IssueBox, toGroups } from "@/components/ValidationIssues";
-import { frontmatterFenceLines, splitCards } from "@/lib/cards";
+import { frontmatterFenceLines, markupLineKinds, splitCards, type LineKind } from "@/lib/cards";
 import { validateMarkdown, type ValidationResult } from "@/lib/validateCards";
 import type { ReviewStatus } from "@/lib/decks";
 
@@ -29,14 +29,22 @@ const VIEW_OPTIONS: { value: View; label: string }[] = [
 ];
 const VIEW_LABEL: Record<View, string> = Object.fromEntries(VIEW_OPTIONS.map((o) => [o.value, o.label])) as Record<View, string>;
 
+// Backdrop tints for the raw editor. The backdrop rows hold no text, so opacity only fades the tint.
+const LINE_TINT: Record<Exclude<LineKind, null>, string> = {
+  h1: "bg-info-soft",
+  h2: "bg-info-soft opacity-80",
+  h3: "bg-info-soft opacity-50",
+  media: "bg-warn-soft",
+};
+
 const IMAGE_SNIPPET = "<img src='Link of Image' width=100%>";
 const ANIMATION_SNIPPET = '<iframe src="Link of Hosted Animations" width="100%" height="700" style="border:1px solid #ccc; border-radius:8px;"></iframe>';
 
 /**
  * Full-screen replacement for the old modal validator: source and cue cards side by side, an
  * editable textarea instead of a read-only preview, and Save wired to the same server-side
- * re-validation the old "Mark as completed" flow used (see app/api/decks/[id]/complete/route.ts) —
- * it just no longer blocks saving on a clean result, only on marking the deck reviewed.
+ * re-validation the old "Mark as completed" flow used (see app/api/decks/[id]/complete/route.ts).
+ * Save stays disabled until the latest Validate run on the current text has zero errors.
  */
 export function DeckEditor(p: Props) {
   const router = useRouter();
@@ -73,6 +81,7 @@ export function DeckEditor(p: Props) {
   const needsValidation = text !== validatedText;
   const cards = useMemo(() => splitCards(text), [text]);
   const fenceLines = useMemo(() => frontmatterFenceLines(text), [text]);
+  const lineKinds = useMemo(() => markupLineKinds(text), [text]);
   const { errGroups, warnGroups } = useMemo(() => toGroups(result), [result]);
   const verdictPass = result.totalErrors === 0;
 
@@ -280,7 +289,8 @@ export function DeckEditor(p: Props) {
             </div>
             <div className="relative min-h-0 min-w-0 flex-1">
               {/* Backdrop showing through the textarea's transparent background, highlighting each
-                  card's `---` frontmatter fences — the textarea itself can't style individual lines.
+                  card's `---` frontmatter fences, headings and img/iframe lines — the textarea
+                  itself can't style individual lines.
                   Renders no real text (one nbsp per line, just to hold the right height): the
                   textarea on top already shows the actual characters, so a scroll-sync lag under
                   fast scrolling shows at most a misaligned tint, never doubled text. */}
@@ -289,11 +299,14 @@ export function DeckEditor(p: Props) {
                 aria-hidden
                 className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre p-3 font-mono text-xs leading-relaxed"
               >
-                {text.split("\n").map((_, i) => (
-                  <div key={i} className={fenceLines.has(i) ? "-mx-3 bg-brand-soft px-3" : undefined}>
-                    {"\u00A0"}
-                  </div>
-                ))}
+                {lineKinds.map((kind, i) => {
+                  const tint = fenceLines.has(i) ? "bg-brand-soft" : kind ? LINE_TINT[kind] : null;
+                  return (
+                    <div key={i} className={tint ? `-mx-3 px-3 ${tint}` : undefined}>
+                      {"\u00A0"}
+                    </div>
+                  );
+                })}
               </div>
               <textarea
                 ref={(el) => {
@@ -395,8 +408,16 @@ export function DeckEditor(p: Props) {
           <button
             type="button"
             onClick={() => void save()}
-            disabled={saving || !dirty || needsValidation}
-            title={needsValidation ? "Run Validate again — you've edited since the last check." : !dirty ? "Nothing to save." : undefined}
+            disabled={saving || !dirty || needsValidation || !verdictPass}
+            title={
+              needsValidation
+                ? "Run Validate again — you've edited since the last check."
+                : !verdictPass
+                  ? "Fix the validation errors before saving."
+                  : !dirty
+                    ? "Nothing to save."
+                    : undefined
+            }
             className={primary}
           >
             {saving && <Spinner className="mr-2 inline h-3.5 w-3.5" />}Save

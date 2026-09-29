@@ -1,118 +1,28 @@
-<!--
-Trimmed for the automated pipeline on 2026-09-22, at your request, to remove lines that either
-duplicated another rule or actively fought the CRITICAL wording-fidelity rule in lib/prompts.ts
-("carry over the script's wording; only restructure, never reword"). Removed or changed:
-  - "Sample Script" section: three onboarding links the model can't open. Non-actionable, dropped.
-  - "Objectives" section: described the SCRIPT a human writer produces from a recording
-    ("conversational format", "grammatically sound") — this pipeline never writes a script, it
-    only reformats one that already exists, so this was pushing the model to rewrite wording.
-  - "Write Short Sentences ... retaining their original meaning": shortening a sentence and
-    keeping it word-for-word are mutually exclusive. Direct conflict, removed.
-  - "check with Grammarly before submitting for review": a step for a human writer, not the model.
-  - Image bullets (diagrams, "use images for LaTeX", the Scaler Admin upload link): the model
-    never has a real image to upload — notebook images arrive as `![plot-N](image-placeholder)`
-    and nothing else. Left as instructions, the model could invent a fake image link. Replaced
-    with a note to keep the placeholder as-is.
-  - The colour-coding guide link: non-actionable; the actual colours are already listed below it.
-  - "reference recording" wherever the model only ever sees a script: reworded to "script".
-  - Title-character rule was stated twice; kept one copy, and folded in that a single hyphen used
-    as a separator is fine (your own golden examples use it — "Opening Hook - 10 Million Rows").
-  - "How to add tables in Markdown" (2026-09-22, at your request): the old rule ("HTML Format
-    Table ... headers as Bold", no worked example) pushed the model toward a full inline-styled
-    HTML `<table>` repeated per table — expensive in output tokens and inconsistent card to card.
-    Replaced with a one-time `<style>` block at the top of the file plus plain GFM tables below it,
-    so styling cost is paid once per file instead of once per table.
-  - "How to add tables in Markdown" again (2026-09-23): that first version put the `<style>` block
-    before the file's first card `---`, which broke real ingestion — a real generated deck showed
-    the first card's title/description/duration rendering as plain visible text in HackMD instead
-    of being read as metadata, because anything before the opening `---` stops it being recognized
-    as a frontmatter delimiter at all. Moved the block to the first thing inside the first card's
-    body instead (still applies to every table in the file; `<style>` isn't scoped by position).
-  - "How to Write Actionables" (2026-09-23): a real deck dropped two bracketed instructor cues,
-    [WAIT FOR ANSWERS] and [REVEAL ANSWER], entirely — not reworded, just gone, including the whole
-    [REVEAL ANSWER] label even though the sentence after it survived. Neither matched a named colour
-    category here, and pass2Prompt's audit checklist in lib/prompts.ts only ever asked the model to
-    check for rewording and invention, never for content dropped with no trace — added a line saying
-    an unrecognized bracketed cue is kept as plain text, not cut, and added that third check to the
-    audit prompt itself.
-  - "When to start a new cue card" (2026-09-24, new section): a real deck split a numbered
-    "Section 3" / "3.1" / "3.2" source structure into a separate card per subheading, including a
-    card that was little more than a heading with almost no content of its own. Nothing anywhere
-    said cards should follow topic boundaries rather than heading boundaries — the golden examples
-    already do this correctly (e.g. IN / NOT IN / BETWEEN share one card as H2 subsections) but it
-    was never stated as a rule, only ever shown implicitly. Added the rule explicitly.
-  - "When to start a new cue card" again (2026-09-24): the first version of that rule said a
-    numbered subsection like 3.1 nests as H3 under a repeated "Section 3" H2. A real example showed
-    the actually-wanted structure is flatter: skip repeating the title as a body heading at all, and
-    let 3.1, 3.2, 3.3 be the card's own H2 siblings directly, since the frontmatter title already
-    says "Section 3". Kept the H2-title+H3-aside pattern for the different case of a card with one
-    distinct extra subsection rather than a numbered peer cluster (matches the existing "Section 1"
-    / "Notation" card in notebook-cards.md, which this rule doesn't touch).
-  - Hallucination-risk audit (2026-09-24):
-    - "Use Pseudocode" bullet removed — written for a human deciding how to draft original content
-      from scratch; this pipeline only reformats an existing script, so it never applies and only
-      risked being read as permission to rewrite a source's own code into a different form.
-    - "Example Content" (Good/Bad Example) rewritten — the old "Good Example" was a reworded version
-      of the "Bad Example," not a restructured one (compare the opening sentences), and the "Note for
-      Writers" praised it for "formal and precise language" — directly contradicting the CRITICAL
-      fidelity rule in lib/prompts.ts, in text sent as literal system-prompt content on every call.
-      Same category of leftover as the already-removed "Objectives" section: guidance for a human
-      writing from scratch, not for restructuring an existing script. Now both examples use the exact
-      same words; only structure differs.
-    - DSML practice-question link: added "never invent or guess one" — the existing wording ("this
-      link changes from one lecture to another") never said the replacement must come from the
-      script, matching the same risk the image-placeholder rule already guards against elsewhere.
-    - Program/module now passed into both prompts (lib/prompts.ts, threaded from lib/decks.ts's
-      DeckRow) — the model previously had no way to know which module a deck belongs to, despite the
-      SOP having module-specific template sections (DSML DA-track, DSML SQL), and had to guess
-      applicability from the script's own content. The person creating the deck already picks
-      program/module explicitly on the form; this just uses that instead of re-guessing it.
-  - "Instructor-only headings" (2026-09-25): a real deck's source heading ("## Backpropagation")
-    vanished with no trace after the model gave that card a more descriptive title, per the SOP's own
-    "title should be descriptive... not generic" rule. FIDELITY_RULE and pass2Prompt's audit checklist
-    in lib/prompts.ts only ever checked that prose statements/cues weren't dropped, never that a source
-    heading's own words survive somewhere once a card gets a different title — added that check. Also,
-    the "Instructor-only headings" section here said headings "should be plain, without any colour" —
-    directly contradicting both golden examples, which colour the Agenda heading with a red background
-    and "(for instructor only)". That convention was never stated in prose anywhere, only shown
-    implicitly in the golden examples — added it explicitly, and fixed the same plain, uncoloured
-    "## Agenda" worked example under "How to Add Tables in Markdown" to match.
-  - FIDELITY_RULE (2026-09-25): added an explicit "never state the same content twice" line, and a
-    matching audit check, alongside the heading-preservation fix above — the two changes were requested
-    together so that instructing the model to restore missing content doesn't tip it toward restoring
-    it in more than one place.
-Delete this comment whenever you're happy with the result; it's here so the change is auditable.
--->
-
 Lecture Script Technical Content Writing Guidelines
 aka Cue Card Creation Guidelines.
-
-Welcome to Scaler's Content team. As a member of this team, your key responsibility will be to standardize the class content.
-
-## What's a cue card
-
-A cue card is a small card or note that contains key points or prompts to help someone remember what to say during a speech, presentation, or performance.
-
-Cue cards should use consistent examples, analogies, and flow of topics, so instructors deliver a similar learning experience regardless of who is teaching the class.
-
-So a alot of such cards are combined and then a lectures complete cue card is created
 
 ## Writing Guidelines
 
 ### Content
 
-- Don't use screenshots/images for code.
+- Never add a line, note or instruction the source doesn't contain, including Instructor Notes.
+- Add a link only when the script gives the URL. If the script names a resource without a URL, keep its text and add no link.
 - Use Punctuation Correctly: Correct punctuation usage ensures that the content flows well and is easy to read.
 - Structuring: Ensure the content is well-structured with proper headings and subheadings.
 - Use `>` as a block wherever adding a Scenario or Action for Instructor.
-- When adding "Note for instructor" or "Ask Learners" as a prompt, try to bullet point the statements under it.
 
 ### Formatting
 
 - Don't Skip Any Part of the Session: 100% coverage of the source script is important unless mentioned by the module owner. This includes hints/doubts/stories/comparisons and observations that are crucial for the understanding of the topic.
 - Highlight Important Points/Words: Use bold or italic formatting to emphasize important points or words.
 - Bullets Over Paragraphs: Where possible, use bullet points instead of long paragraphs to make the content more digestible.
-- Images: a script image becomes `![plot-N](image-placeholder)`. Keep that placeholder exactly as given — there is no real image to link to, so never invent an image URL or an `<img>` tag.
+- Images: every image in the script becomes an `<img>` tag with `width="500"`.
+  - If the script gives the image's URL, use that exact URL.
+  - If it doesn't — including `![plot-N](image-placeholder)` images and blank image slots — use exactly:
+    `<img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/243/122/original/Screenshot_2026-09-28_at_18.15.19.png?1790599543" alt="image-N" width="500" />`
+  - Number N in order across the file (image-1, image-2, ...).
+  - Never write any other image URL. The only exception is the Unlock Assignment template's own two images.
+  - Never replace text, a table, a code block or a text diagram with an image — keep the source's text.
 
 ## Example Content
 
@@ -129,21 +39,21 @@ Understanding the prefix sum will help you design better algorithms, so try usin
 ### Good Example — same words, restructured
 
 ````markdown
-# Introduction
+## Introduction
 
 So, we have a thing called Prefix Sum, in the field of data structures and algorithms, it is a method that modifies an array so that the element at each index 'i' in the new array is the sum of the elements from '0' to 'i' in the old array.
 
-# Importance of Prefix Sum
+## Importance of Prefix Sum
 
 The Prefix Sum concept is really important because it can solve many problems more efficiently, especially the ones that need to get cumulative sums. It can help us make algorithms run faster, which is always good.
 
-# Key Points
+## Key Points
 
 There are things you should remember about Prefix Sum:
 - firstly, it is also called a cumulative array
 - secondly, it's a quick way to get cumulative sums of arrays which is useful for a lot of problems
 
-# Steps to Calculate Prefix Sum
+## Steps to Calculate Prefix Sum
 
 Calculating Prefix Sum goes like this:
 - firstly, we take the first element of the old array and put it as the first element of the new array
@@ -158,6 +68,22 @@ Note for Writers:
 Notice that not one word changed between the two — no "cleaning up" the casual phrasing, no shortening, no making it sound more formal. The only things that changed are structural: headings were added, and the "firstly / secondly / thirdly" runs were split into bullets at their own existing boundaries. That's the only kind of change this pipeline ever makes to a script's own wording — restructuring, never rewording, no matter how repetitive or casual the source sounds.
 
 ## Code blocks
+
+Code, URLs, LaTeX and identifiers (table, column, function and file names) are copied byte-for-byte from the source. Typo fixes never apply inside them — not even an obvious-looking one like a stray space or a doubled character.
+
+### Inline code (single backticks)
+
+Wrap these in single backticks, even when the source has them as plain text:
+
+- A single line of code inside prose: `` `WHERE city = 'Bangalore'` ``, `` `ROUND(value, 1)` ``
+- A keyword or special character: `for`, `if-else`, `int`, `__init__`, `%`, `||` (a math symbol that is already LaTeX in the source stays LaTeX — see Math below)
+- Any word containing an underscore: `order_value`, `hello_how_areyou`, `__init__`
+
+Adding backticks is the one change allowed around code — the code inside them stays byte-for-byte. The only exception: a markdown escape backslash (`\'`) is dropped inside backticks, since it would otherwise show up literally.
+
+### Math
+
+LaTeX stays LaTeX — copy the source's `$…$` and `$$…$$` exactly (`$z_1$`, `$\hat{y}_i$`); never turn it into inline code or plain text. Only math that is bare text in the source (e.g. `z_Paper = 2`) may be wrapped in backticks. Never leave a math symbol as bare text.
 
 For a code block, we need to follow this format:
 
@@ -181,23 +107,46 @@ Example:
 <iframe src="Link of Hosted Animations" width="100%" height="700" style="border:1px solid #ccc; border-radius:8px;"></iframe>
 ```
 
-Adjust the height and width of the frame as per the view and needs of the animations.
+Use the source's width and height when given (e.g. a notebook `IFrame(..., height=1000)` becomes `height="1000"`). Only when the source gives none, use `width="100%" height="700"` as above.
 
 ## How to Write Actionables
 
-- Note for Instructor / Ask Learners / Any Mandatory Note or Important Note [Color: Red]: `<span style="background-color: red;">`
-- Doubts by learners, Optional Content (if instructed by Reviewer) [Color: Orange]: `<span style="color: orange;">`
-- Question/Problem Statements (if small, highlight the complete statement), generally for Problem-Solving sessions [Color: Violet]: `<span style="color: violet;">`
-- Miscellaneous: `<span style="background-color: red">` or `<font color='green'>`
-- A bracketed instructor cue that doesn't match any category above (e.g. `[WAIT FOR ANSWERS]`, `[REVEAL ANSWER]`) is never a reason to drop it — keep it as plain bracketed text exactly as written. Not knowing which colour it deserves is not the same as it being safe to cut.
+Every label in the source maps to exactly one output. Copy the span exactly as shown — same style string, same spacing.
+
+| Source label | Output |
+| --- | --- |
+| `Instructor Note -`, `Instructor cue`, `Note for Instructor` | `<span style="background-color: red;color: White;">Instructor Note:</span>` + text |
+| `Question to the class`, `Ask Learners` | `<span style="background-color: red;color: White;">Question to the class</span>` + text |
+| `Doubt by Learner` | `<span style="color: orange;">Doubt by Learner:</span>` + text |
+| `Important`, `Note`, `Disclaimer` | `<span style="color: red;">Important:</span>` + text — using the source's own word (`Note:`, `Disclaimer:`) |
+| `Question:` (an open question, no options) | `<span style="color: violet;">Question: …</span>` — the whole question inside the span |
+| `Dataset` | `<span style="background-color: Blue;color:white">Dataset:</span>` + the source's text, or its link only if the script gives a URL |
+
+- Only the label goes inside the span; the text follows after `</span>`. The one exception is the violet open question, which wraps the whole question. Right: `<span style="background-color: red;color: White;">Instructor Note:</span> This class assumes...` Wrong: wrapping the whole note in the span, which turns every line of it red.
+- The source's own label words are replaced by the output label — never write both (not "Instructor Note: Instructor cue …").
+- A question followed by lettered options is a quiz card, not a violet line — see "When a question becomes a quiz card".
+- If several statements follow a label, keep them as bullets under it; a single statement stays on the label's line.
+- A bracketed instructor cue that doesn't match any label above (e.g. `[WAIT FOR ANSWERS]`, `[REVEAL ANSWER]`) is never a reason to drop it — keep it as plain bracketed text exactly as written.
 
 ### Heading levels
 
-No lecture-title heading — cue cards start directly with the first card's metadata. The card's `title:` metadata already names it; the body doesn't need to repeat that name as its own heading unless the card has exactly one extra aside worth calling out (see the second example below). Use H2 for whatever heading actually starts the card's real content; use H3, and H4 if it's needed, for genuine subsections nested under that.
+No lecture-title heading — cue cards start directly with the first card's metadata. The card's `title:` metadata already names it; the body doesn't need to repeat that name as its own heading unless the card has exactly one extra aside worth calling out (see the second example below). Use H2 for whatever heading actually starts the card's real content; use H3, and H4 if it's needed, for genuine subsections nested under that. `#` (H1) appears only as `# Question` / `# Choices` in quiz cards — never in a cue card.
 
 ```
 ## The Complete Architecture Flow
 ```
+
+### Lines that are dropped
+
+These scaffolding lines from the script never become card content:
+
+- The lecture header / title line (e.g. "Lecture 3  —  Data Filtering with SQL", or a notebook's opening `# …` title)
+- The program line (e.g. "DSML  ·  Scaler 3.0  ·  120 min class  +  30 min doubts")
+- Hour banners and their subtitle lines (e.g. "HOUR 1  —  Filtering", "WHERE · AND/OR/NOT · IN · BETWEEN · IS NULL")
+- Per-segment timing lines (e.g. "7 min", "5 min  ·  informal") — the timing goes into that card's `duration`, in seconds (7 min → `duration: 420`)
+- Document-export leftovers: "Tab 1" / "Tab 2" markers, `________________` separators, and a doc's own framing line such as "Here are the quiz questions for the specified sections."
+
+This is the only exception to heading survival and to "don't drop content". An Agenda table in the source still stays a table, times included.
 
 ### When to start a new cue card
 
@@ -242,44 +191,6 @@ Any optional heading can be labelled in orange:
 
 `<span style="color: orange;">(optional)</span>`
 
-### Actionable examples
-
-```
-<span style="color: orange;">Doubt by Learner:</span>
-* Demo
-* Demo
-```
-
-```
-<span style="color: orange;">Doubt by Learner (Optional):</span>
-* Demo
-* Demo
-```
-
-```
-<span style="color: red;">Disclaimer:</span>
-* Demo
-* Demo
-```
-
-```
-<span style="color: red;">Important:</span>
-* Demo
-* Demo
-```
-
-```
-<span style="color: red;">Note:</span>
-* Demo
-* Demo
-```
-
-```
-<span style="background-color: red;color: White;">Instructor Note:</span>
-
-<span style="background-color: red;color: White;">**[Ask Learners]:**</span>
-```
-
 ### Steps, in green
 
 ```
@@ -288,67 +199,19 @@ Any optional heading can be labelled in orange:
 * <span style="color: green;">Step 2</span>
 ```
 
-### Question, in violet
-
-The complete question should be in violet, on just the question heading:
-
-`<span style="color: violet;">Question: ...</span>`
-
-### Dataset link
-
-`<span style="background-color: Blue;color:White;">Dataset link</span>`
-
-### Uploading images
-
-Upload images at https://www.scaler.com/admin/add_files/public-asset. (The pipeline itself never uploads an image on your behalf — a notebook's own plots always arrive as `![plot-N](image-placeholder)` and that placeholder must be kept exactly as given, never replaced with an invented link.)
-
 ### How to add images in Markdown
 
-**Good practice** — an `<img>` tag with a width set:
+An `<img>` tag with `width="500"`. When the script gives no URL, use the placeholder (see "Images" under Formatting), numbering N in order across the file:
 
-`<img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/043/265/original/Screenshot_2023-08-18_at_4.18.55_PM.png?1692355744" width="500" />`
+`<img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/243/122/original/Screenshot_2026-09-28_at_18.15.19.png?1790599543" alt="image-N" width="500" />`
 
 ### How to add tables in Markdown
 
-**Style block — once per file, inside the first card, never before it.** If the file has one or more tables, the very first thing in the **first card's body** — immediately after that card's closing `---`, before anything else — must be:
+**Never write a `<style>` block.** The pipeline adds the table styling to the file itself, once, after all sections are generated.
 
-```html
-<style>
-table { border-collapse: collapse; }
-table th, table td { border: 1px solid #94a3b8; padding: 6px 10px; }
-table th { background:#1e3a8a; color:white; }
-table td:nth-child(2) { font-weight:bold; }
-</style>
-```
+**A source table stays a GFM table.** Never convert it to an image or a list, and keep every row and column — including times in an agenda table.
 
-`<style>` styles the whole file no matter which card's body it sits in — but the very top of the file, before the first card's own `---`, is off limits: putting anything there (including this block) stops that opening `---` from being recognized as the card's metadata delimiter at all, so the title/description/duration lines render as plain visible text instead of being read as the card's metadata. That breaks the first card outright, which is exactly why this must go inside it instead.
-
-Worked example, showing the required placement:
-
-```markdown
----
-title: Agenda
-description: Overview of topics covered
-duration: 180
-card_type: cue_card
----
-
-<style>
-table { border-collapse: collapse; }
-table th, table td { border: 1px solid #94a3b8; padding: 6px 10px; }
-table th { background:#1e3a8a; color:white; }
-table td:nth-child(2) { font-weight:bold; }
-</style>
-
-## <span style="background-color: red;">Agenda (for instructor only)</span>
-
-- First topic
-- Second topic
-```
-
-Insert it once for the whole file, never once per table — it styles every table below it, in this card and every later one. If the file already has this block, don't add a second one. Don't add it to a file with no tables.
-
-**Table syntax:** standard Markdown (GFM) — a header row plus a `|---|---|` separator row — never HTML `<table>` tags. Use alignment (`:---` left, `:---:` center, `---:` right) where it helps. Keep cell text short; move long explanations below the table rather than into a cell.
+**Table syntax:** standard Markdown (GFM) — a header row plus a `|---|---|` separator row — never HTML `<table>` tags. Use alignment (`:---` left, `:---:` center, `---:` right) where it helps.
 
 ```
 | user_id | name | phone | age |
@@ -357,10 +220,11 @@ Insert it once for the whole file, never once per table — it styles every tabl
 | 2 | Bkon | 9991165674 | 35 |
 ```
 
-**Cell-level styling:** for coloured text inside a cell, use an inline span — `<span style="color:green">Hands-on</span>`. Use colour meaningfully and consistently: green = done/hands-on, red = blocked/failed, orange = partial. Don't add other inline styles, and don't change the style block's values, unless explicitly asked.
+**Cell-level styling:** for coloured text inside a cell, use an inline span — `<span style="color:green">Hands-on</span>`. Use colour meaningfully and consistently: green = done/hands-on, red = blocked/failed, orange = partial. Don't add other inline styles unless explicitly asked.
 
 ### Quiz cards: no extra text
 
+````markdown
 ---
 title: Quiz 1
 description: Optional description
@@ -381,36 +245,45 @@ Which of the following is correct
 
 There should not be any explanation or text inside a quiz cue card — only the question and choices.
 
+### When a question becomes a quiz card
+
+A question followed by lettered options (`A)`, `(A)`, `A.` …) is a `quiz_card` — even when the source labels it `Question:` or `**Question:**` instead of Quiz. An open question with no options stays a violet line inside a cue card.
+
+- Drop the letter prefixes from the choices. Question and choice text are copied word for word, punctuation included — never add, drop or change a character, even a trailing full stop. The only addition allowed is backticks around code, per "Inline code" above.
+- When the source gives a correct answer (`Correct Answer: C. 6`, `Correct Answer: (B)`, or inside a note), mark that option `[x]`. Also open the `Quiz N Explanation` cue card, right after the quiz, with `**Correct Answer:** <option text>` — the option's text only, dropping the letter and any brackets around it.
+- Any explanation the source gives follows that line in the same card, word for word.
+- If the source has a correct answer but no explanation, the explanation card holds only the `**Correct Answer:**` line.
+- If the source has neither an answer nor an explanation, there is no explanation card, and every choice stays `[ ]`. Never guess the answer — the validator flags it and a reviewer marks it.
+
 ### Don't leave content without a parent cue card
 
 The text or content that sits between two cue cards, outside any `---` block, is shown to the instructor only. Make sure every piece of content lives inside a cue card — content with no parent cue card gets missed entirely.
 
 ### Code format
 
+Use the language after the opening fence, followed by `=`. If the language isn't known, use `text=`.
 
-## SQL code
+`````markdown
 ```sql=
 write the query
 here
 ```
 
-## Python code
 ```python=
 write the code
 here
 ```
-if language not known
 
 ```text=
 Code
 ```
+`````
 
+### Unlock Assignment card (only when the script has an unlock-assignment part)
 
-### DSML – DA track modules only
+Add this card only when the script itself contains an unlock-assignment part — the script says to unlock the assignment for learners, or to have a learner solve an assignment question live in class. Never add it because of the program or module, and never add it to a script that has no such part. When it applies, that part of the script becomes this card: use the template below, and keep any of the script's own lines about it that the template doesn't already say. Only the practice-question link changes between lectures.
 
-The following applies specifically to DSML DA-track modules. Reuse it as a template; only the practice-question link changes between lectures.
-
-
+````markdown
 ---
 title: Unlock Assignment & ask learner to solve in live class
 description:
@@ -421,7 +294,7 @@ card_type: cue_card
 * <span style="color:skyblue">Unlock the assignment for learners</span> by clicking the **"question mark"** button on the top bar.
 <img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/078/685/original/Screenshot_2024-06-19_at_7.17.12_PM.png?1718804854" width=200 />
 * If you face any difficulties using this feature, please refer to this video on how to unlock assignments.
-* <span style="color:red">**Note:** The following video is strictly for instructor reference only. [VIDEO LINK](https://www.loom.com/share/15672134598f4b4c93475beda227fb3d?sid=4fb31191-ae8c-4b18-bf81-468d2ffd9bd4)</span>
+* <span style="color: red;">Note:</span> The following video is strictly for instructor reference only. [VIDEO LINK](https://www.loom.com/share/15672134598f4b4c93475beda227fb3d?sid=4fb31191-ae8c-4b18-bf81-468d2ffd9bd4)
 
 ### Conducting a Live Assignment Solution Session:
 1. Once you unlock the assignments, ask if anyone in the class would like to solve a question live by sharing their screen.
@@ -441,27 +314,7 @@ This will help the learners to get familiar with the problem solving process and
 > Q. https://www.scaler.com/hire/test/problem/54464/ (Where !=): Emp 101 - Easy
 ````
 
-Only this last question link changes from one lecture to another; everything else in the block above stays the same. Only replace it if the script itself gives you this lecture's real practice-question link — never invent or guess one. If the script doesn't provide one, leave the example link above as it is rather than making one up.
-
-### DSML – SQL module only
-
-The following applies specifically to the DSML SQL module.
-
-````markdown
-<span style="background-color: red">**Disclaimer:**</span> <span style="color:orange;">The text in orange</span>
-
-## <font color='violet'>**Dialogue Template Starts:**</font>
-
-**Instructor**:
-**Learner**:
-**Instructor**:
-
-## <font color='violet'>**Dialogue Template Ends**</font>
-
-<span style="background-color: red">**Instructor Note:**</span> <span style="color:orange;">The text in orange</span>
-
-### <font color='green'>Formulating questions to be explored based on the data provided:</font>
-````
+Only this last question link changes from one lecture to another; everything else in the block above stays the same. Only replace it if the script itself gives you this lecture's real practice-question link — never invent or guess one. If the script gives no link, replace the whole `> Q. …` line with `<span style="background-color: red;color: White;">**[PRACTICE LINK NEEDED]**</span>`.
 
 ## How to Format the Cue Card Content
 
@@ -498,7 +351,7 @@ duration: 300
 card_type: cue_card
 ---
 
-# Introduction to Arrays
+## Introduction to Arrays
 
 Take this time to highlight all the topics that will be covered in the class as per the below list
 - How are arrays stored
@@ -521,7 +374,7 @@ Example:
 
 ````markdown
 ---
-title: Quiz-2
+title: Quiz 2
 description: Optional description
 duration: 45
 card_type: quiz_card
