@@ -7,6 +7,7 @@ import { prewarmCache } from "@/lib/openrouter";
 import { estimateDeck, estimateTokens } from "@/lib/pricing";
 import { budgetTiers } from "@/lib/budget";
 import { loadSopBlocks, SopMissingError } from "@/lib/sop/load";
+import { deleteUploads, downloadUpload, isOwnUploadPath } from "@/lib/storage";
 
 // loadSopBlocks only distinguishes these two families; match that here for the warmth check.
 const NOTEBOOK_INPUT_TYPES = ["ipynb"];
@@ -14,21 +15,30 @@ const PROSE_INPUT_TYPES = ["md", "docx", "gdoc"];
 
 export const maxDuration = 60;
 
-const MAX_UPLOAD_BYTES = 4 * 1024 * 1024; // Vercel's request body limit is 4.5 MB
+const DIRECT_UPLOAD_MAX_BYTES = 4 * 1024 * 1024; // multipart `file` goes through Vercel's 4.5 MB body limit
 const WARMUP_BUDGET_MS = 8_000; // cap on how long the estimate response waits for the warm-up below
 
-/** Parses an upload (multipart `file`) or a Google Doc (`url`), then chunks it and estimates cost. */
+/**
+ * Parses a Storage upload (`storagePath`, from /api/upload), a direct upload (multipart `file`,
+ * ≤ 4 MB) or a Google Doc (`url`), then chunks it and estimates cost.
+ */
 export async function POST(req: Request) {
   const guard = await requireUser();
   if (guard.error) return guard.error;
 
   let parsed: ParsedScript;
+  let storagePath: string | null = null;
   try {
     const form = await req.formData();
     const file = form.get("file");
     const url = form.get("url");
-    if (file instanceof File) {
-      if (file.size > MAX_UPLOAD_BYTES) throw new ParseError("File is larger than 4 MB.");
+    const path = form.get("storagePath");
+    if (typeof path === "string" && path) {
+      if (!isOwnUploadPath(guard.user.email, path)) throw new ParseError("Upload not found. Try uploading the file again.");
+      storagePath = path;
+      parsed = await parseUpload(path, await downloadUpload(path));
+    } else if (file instanceof File) {
+      if (file.size > DIRECT_UPLOAD_MAX_BYTES) throw new ParseError("File is larger than 4 MB.");
       parsed = await parseUpload(file.name, Buffer.from(await file.arrayBuffer()));
     } else if (typeof url === "string" && url.trim()) {
       parsed = await parseGoogleDoc(url);
@@ -39,6 +49,10 @@ export async function POST(req: Request) {
     if (err instanceof ParseError) return NextResponse.json({ error: err.message }, { status: 422 });
     console.error("parse failed", err);
     return NextResponse.json({ error: "Could not read that file." }, { status: 500 });
+  } finally {
+    // The parsed text is what gets stored (decks.source_md); the original file is never kept.
+    // A failed delete is left for the daily sweep in /api/cron/reconcile.
+    if (storagePath) await deleteUploads([storagePath]).catch((e) => console.error("upload delete failed", e));
   }
 
   const text = parsed.text;

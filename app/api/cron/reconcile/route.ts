@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { reconcile } from "@/lib/reconcile";
+import { sweepStaleUploads } from "@/lib/storage";
 
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
@@ -13,5 +14,7 @@ export async function GET(req: Request) {
   if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return NextResponse.json(await reconcile({ limit: 500 }));
+  // Rides on this cron because Hobby allows one run per day; a sweep failure must not block reconcile.
+  const uploads = await sweepStaleUploads().catch((e) => ({ error: String(e) }));
+  return NextResponse.json({ ...(await reconcile({ limit: 500 })), uploads });
 }

@@ -38,7 +38,18 @@ const checks: [string, string, () => PromiseLike<{ error: { message: string } | 
     "0006_concurrency.sql",
     () => db.rpc("release_budget_reservation", { p_deck_id: "00000000-0000-0000-0000-000000000000", p_amount: 0 }),
   ],
+  ["uploads storage bucket (private, 20 MB)", "0010_uploads_bucket.sql", checkUploadsBucket],
 ];
+
+async function checkUploadsBucket() {
+  const base = url!.replace(/\/+$/, "").replace(/\/rest\/v1$/, "");
+  const res = await fetch(`${base}/storage/v1/bucket/uploads`, { headers: { apikey: key!, Authorization: `Bearer ${key}` } });
+  if (!res.ok) return { error: { message: `bucket not found (${res.status})` } };
+  const b = (await res.json()) as { public: boolean; file_size_limit: number | null };
+  if (b.public) return { error: { message: "bucket is public; it must be private" } };
+  if (b.file_size_limit !== 20971520) return { error: { message: `file_size_limit is ${b.file_size_limit}, expected 20971520` } };
+  return { error: null };
+}
 
 async function main() {
   let bad = 0;

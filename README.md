@@ -130,6 +130,6 @@ Notebook uploads use the notebook pair; everything else uses the prose pair. The
 
 ## Notes
 
-- Uploads are limited to 4 MB (Vercel's request body limit is 4.5 MB). Notebooks shrink ~20× after image stripping (855 KB → ~37 KB).
+- Uploads are limited to 20 MB. The browser uploads straight to a private Supabase Storage bucket (`uploads`, from migration 0010) with a signed URL, so Vercel's 4.5 MB request body limit doesn't apply. `/api/parse` downloads the file, parses it, and deletes it; only the parsed text is kept (`decks.source_md`). The daily cron also sweeps uploads older than an hour. Free plan: 50 MB max per file, 1 GB storage, 5 GB egress/month (each upload counts once as egress when parsed). Notebooks shrink ~20× after image stripping (855 KB → ~37 KB).
 - Preview mode sanitises the HTML in cards: colour spans render, iframes (animations) do not. Raw mode and Copy always give the exact generated text.
 - Out of scope for v1: in-app editing, publishing to HackMD, image hosting for notebook plots, a deterministic SOP validator.

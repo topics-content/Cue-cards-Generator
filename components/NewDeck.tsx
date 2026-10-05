@@ -28,6 +28,24 @@ const field =
   "w-full rounded-lg border border-line bg-surface px-4 py-2 text-sm text-foreground placeholder:text-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent";
 const label = "mb-2 block text-sm font-medium";
 
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // mirrors lib/storage.ts (server-only module)
+
+/** PUT via XHR, since fetch can't report upload progress. */
+function putWithProgress(url: string, file: File, onPct: (pct: number) => void) {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.upload.onprogress = (e) => e.lengthComputable && onPct(Math.round((e.loaded / e.total) * 100));
+    xhr.onload = () =>
+      xhr.status >= 200 && xhr.status < 300
+        ? resolve()
+        : reject(new Error(xhr.status === 413 ? "File is larger than 20 MB." : `Upload failed (${xhr.status}).`));
+    xhr.onerror = () => reject(new Error("Upload failed. Check your connection and try again."));
+    xhr.send(file);
+  });
+}
+
 export function NewDeck({ inrRate }: { inrRate: number }) {
   const [program, setProgram] = useState("");
   const [moduleName, setModuleName] = useState("");
@@ -39,6 +57,7 @@ export function NewDeck({ inrRate }: { inrRate: number }) {
   const [fileName, setFileName] = useState("");
   const [parsed, setParsed] = useState<Parsed | null>(null);
   const [parsing, setParsing] = useState(false);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [run, setRun] = useState<Run | null>(null);
@@ -76,12 +95,39 @@ export function NewDeck({ inrRate }: { inrRate: number }) {
     }
   }
 
+  // Files go straight to Supabase Storage via a signed URL (skips Vercel's 4.5 MB body limit),
+  // then /api/parse reads the file from there by path.
+  async function upload(f: File) {
+    setParsing(true);
+    setError(null);
+    setParsed(null);
+    setUploadPct(0);
+    try {
+      if (f.size > MAX_UPLOAD_BYTES) throw new Error("File is larger than 20 MB.");
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: f.name, size: f.size }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Could not start the upload.");
+      await putWithProgress(data.uploadUrl, f, setUploadPct);
+      setUploadPct(null);
+      const fd = new FormData();
+      fd.set("storagePath", data.path);
+      await parse(fd);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not upload that file.");
+      setParsing(false);
+    } finally {
+      setUploadPct(null);
+    }
+  }
+
   const onFile = (f: File | undefined) => {
-    if (!f) return;
+    if (!f || parsing) return;
     setFileName(f.name);
-    const fd = new FormData();
-    fd.set("file", f);
-    void parse(fd);
+    void upload(f);
   };
 
   const onFetchUrl = () => {
@@ -197,11 +243,11 @@ export function NewDeck({ inrRate }: { inrRate: number }) {
               className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line px-4 py-8 text-center"
             >
               <p className="text-sm">{fileName || "Drop a file here, or"}</p>
-              <input ref={fileRef} type="file" accept=".ipynb,.md,.markdown,.txt,.docx" className="sr-only" id="file" onChange={(e) => onFile(e.target.files?.[0])} />
-              <label htmlFor="file" className="cursor-pointer rounded-lg border border-line px-4 py-2 text-sm font-medium transition hover:border-accent focus-within:outline">
+              <input ref={fileRef} type="file" accept=".ipynb,.md,.markdown,.txt,.docx" className="sr-only" id="file" disabled={parsing} onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
+              <label htmlFor="file" aria-disabled={parsing} className={`rounded-lg border border-line px-4 py-2 text-sm font-medium transition focus-within:outline ${parsing ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:border-accent"}`}>
                 Choose file
               </label>
-              <p className="text-xs text-muted">.ipynb, .md or .docx · up to 4 MB</p>
+              <p className="text-xs text-muted">.ipynb, .md or .docx · up to 20 MB</p>
             </div>
           ) : (
             <div className="flex gap-2">
@@ -211,7 +257,16 @@ export function NewDeck({ inrRate }: { inrRate: number }) {
               </button>
             </div>
           )}
-          {parsing && <p className="mt-4 flex items-center gap-2 text-sm text-muted" role="status"><Spinner /> Reading the script…</p>}
+          {parsing && (
+            <div className="mt-4 text-sm text-muted" role="status">
+              <p className="flex items-center gap-2"><Spinner /> {uploadPct !== null ? `Uploading… ${uploadPct}%` : "Reading the script…"}</p>
+              {uploadPct !== null && (
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line" aria-hidden>
+                  <div className="h-full bg-primary transition-[width]" style={{ width: `${uploadPct}%` }} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {parsed && (
