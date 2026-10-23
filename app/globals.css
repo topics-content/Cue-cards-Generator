@@ -173,6 +173,10 @@
 .md-preview blockquote { border-left: 3px solid var(--accent); padding-left: 1em; color: var(--muted); }
 .md-preview table { border-collapse: collapse; display: block; overflow-x: auto; }
 .md-preview th, .md-preview td { border: 1px solid var(--line); padding: 0.35em 0.7em; text-align: left; }
+/* Mirrors TABLE_STYLE in lib/cards.ts, which ships with the markdown for HackMD but is stripped
+   here by rehype-sanitize — without these the preview wouldn't show what HackMD renders. */
+.md-preview th { background: #1e3a8a; color: white; }
+.md-preview td:nth-child(2) { font-weight: bold; }
 .md-preview img { max-width: 100%; height: auto; border-radius: 6px; }
 .md-preview hr { border-color: var(--line); }
 

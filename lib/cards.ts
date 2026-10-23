@@ -109,20 +109,39 @@ table th { background:#1e3a8a; color:white; }
 table td:nth-child(2) { font-weight:bold; }
 </style>`;
 
+const TABLE_SEPARATOR = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/;
+
 /**
- * The table <style> block is a whole-file rule, but generation runs one section at a time — so the
- * model is told never to write it, and it's added here after the sections are merged: once, right
- * after the first card's closing `---` (anything before that `---` would break the first card's
- * frontmatter). Any <style> block the model wrote anyway is removed first. Files with no GFM table
- * (outside code fences) get none.
+ * Every table gets its own <style> block directly above it. One block for the whole file would be
+ * enough CSS, but a card is routinely read and copied on its own — OutputView renders each card in
+ * its own box with a per-card Copy button — so a block sitting in card 1 leaves every other table
+ * unstyled wherever it actually gets pasted. Generation runs one section at a time and the model is
+ * told never to write the block, so any <style> it wrote anyway is stripped first. A block is never
+ * placed before the first card's opening `---`: anything there stops that `---` being read as the
+ * frontmatter delimiter (lib/validateCards.ts flags it). Files with no GFM table get none.
  */
 export function addTableStyle(text: string): string {
   const stripped = text.replace(/\n*<style>[\s\S]*?<\/style>\n*/g, "\n\n");
-  const outsideCode = stripped.replace(/^```[\s\S]*?^```/gm, "");
-  const hasTable = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/m.test(outsideCode);
   const first = frontmatterStarts(stripped)[0];
-  if (!hasTable || !first) return stripped;
-  return stripped.slice(0, first.end) + "\n" + TABLE_STYLE + "\n\n" + stripped.slice(first.end).replace(/^\n+/, "");
+  if (!first) return stripped;
+
+  const lines = stripped.split("\n");
+  const bodyStart = stripped.slice(0, first.end).split("\n").length - 1;
+  const out: string[] = [];
+  let inFence = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().startsWith("```")) inFence = !inFence;
+    // A table starts at its header row — the line directly above the `---|---` separator.
+    const startsTable =
+      !inFence && i >= bodyStart && lines[i].includes("|") && i + 1 < lines.length && TABLE_SEPARATOR.test(lines[i + 1]);
+    if (startsTable) {
+      if (out.length && out[out.length - 1].trim() !== "") out.push("");
+      out.push(TABLE_STYLE);
+    }
+    out.push(lines[i]);
+  }
+  return out.join("\n");
 }
 
 export function splitCards(text: string): Card[] {

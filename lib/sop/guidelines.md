@@ -207,7 +207,7 @@ An `<img>` tag with `width="500"`. When the script gives no URL, use the placeho
 
 ### How to add tables in Markdown
 
-**Never write a `<style>` block.** The pipeline adds the table styling to the file itself, once, after all sections are generated.
+**Never write a `<style>` block.** The pipeline adds the table styling itself, after all sections are generated — one block directly above each table, so a card still styles its table when it's copied on its own.
 
 **A source table stays a GFM table.** Never convert it to an image or a list, and keep every row and column — including times in an agenda table.
 

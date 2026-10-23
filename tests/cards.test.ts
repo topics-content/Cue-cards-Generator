@@ -100,17 +100,30 @@ describe("addTableStyle", () => {
   const fm = (t: string) => `---\ntitle: ${t}\ndescription: d\nduration: 60\ncard_type: cue_card\n---\n`;
   const table = "| a | b |\n| --- | --- |\n| 1 | 2 |\n";
 
-  it("adds one style block right after the first card's frontmatter when a table exists", () => {
+  it("puts a style block directly above the table, in the card the table is actually in", () => {
     const out = addTableStyle(fm("One") + "\n## One\n\n" + fm("Two") + "\n" + table);
     expect(out.split("<style>")).toHaveLength(2);
-    expect(out.indexOf(TABLE_STYLE)).toBeGreaterThan(out.indexOf("card_type"));
-    expect(out.indexOf(TABLE_STYLE)).toBeLessThan(out.indexOf("## One"));
+    // Block sits inside card 2, below its frontmatter — not up in card 1.
+    expect(out.indexOf(TABLE_STYLE)).toBeGreaterThan(out.indexOf("## One"));
+    expect(out).toContain(TABLE_STYLE + "\n| a | b |");
   });
 
-  it("replaces style blocks the model wrote with the single canonical one", () => {
+  it("gives every table its own block", () => {
+    const out = addTableStyle(fm("One") + "\n" + table + "\ntext between\n\n" + table);
+    expect(out.split("<style>")).toHaveLength(3);
+  });
+
+  it("replaces style blocks the model wrote with the canonical one", () => {
     const out = addTableStyle(fm("One") + "\n<style>x{}</style>\n\n" + table + "\n<style>y{}</style>\n");
     expect(out.split("<style>")).toHaveLength(2);
     expect(out).toContain(TABLE_STYLE);
+    expect(out).not.toContain("x{}");
+  });
+
+  it("never places a block before the first card's opening ---", () => {
+    const out = addTableStyle(fm("One") + "\n" + table);
+    expect(out.indexOf("<style>")).toBeGreaterThan(out.indexOf("card_type"));
+    expect(out.startsWith("---")).toBe(true);
   });
 
   it("adds nothing without a table, and ignores table-like lines inside code fences", () => {
