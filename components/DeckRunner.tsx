@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { OutputView, type Stats } from "@/components/OutputView";
 import { Spinner } from "@/components/Spinner";
+import { addTableStyle } from "@/lib/cards";
 import { runWithConcurrency } from "@/lib/concurrency";
 import type { ReviewStatus } from "@/lib/decks";
 import { usd, inr } from "@/lib/format";
@@ -235,7 +236,7 @@ export function DeckRunner(p: Props) {
   // per-section texts underneath are untouched and keep driving progress/resume, just not the view.
   // Only ever changes via the full-screen editor (a separate page), which a fresh navigation back
   // here re-fetches from the server — so this needs no client-side state of its own.
-  const markdown = p.initialEditedOutput ?? texts.filter((t) => t.trim()).join("\n\n");
+  const markdown = addTableStyle(p.initialEditedOutput ?? texts.filter((t) => t.trim()).join("\n\n"));
   const box = "rounded-lg border px-4 py-4 text-sm";
   const primary = "rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-fg transition hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
   const ghost = "rounded-lg border border-line px-4 py-2 text-sm font-medium transition hover:border-accent";
