@@ -80,6 +80,7 @@ export function DeckEditor(p: Props) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   // Left/right side-by-side content pickers. Kept distinct from each other (see setLeftView /
   // setRightView) since "raw" mounts the one shared CodeMirror editor — two copies can't exist at once.
@@ -384,7 +385,7 @@ export function DeckEditor(p: Props) {
           )}
           <button
             type="button"
-            onClick={() => void save()}
+            onClick={() => setConfirmSaveOpen(true)}
             disabled={saving || !dirty || needsValidation || !verdictPass}
             title={
               needsValidation
@@ -437,6 +438,27 @@ export function DeckEditor(p: Props) {
         onCancel={() => setConfirmOpen(false)}
       >
         <p>You&apos;ve made edits since the last save. Leaving now discards them.</p>
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirmSaveOpen}
+        title="Run Validator 2 before saving"
+        confirmLabel="Save"
+        onCancel={() => setConfirmSaveOpen(false)}
+        onConfirm={() => { setConfirmSaveOpen(false); void save(); }}
+      >
+        <p>
+          Please run this deck through{" "}
+          <a
+            href="https://www.scaler.com/admin/meetings/cue-card-validator-content-tea/cue-cards/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline"
+          >
+            Validator 2
+          </a>{" "}
+          before saving.
+        </p>
       </ConfirmDialog>
     </div>
   );
