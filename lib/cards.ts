@@ -144,6 +144,98 @@ export function addTableStyle(text: string): string {
   return out.join("\n");
 }
 
+const normalizeHeading = (s: string) => s.replace(/<[^>]*>/g, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+
+function sourceH2s(source: string): Set<string> {
+  const out = new Set<string>();
+  let inFence = false;
+  for (const line of source.split("\n")) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    const m = !inFence && line.match(/^##\s+(.+?)\s*#*\s*$/);
+    if (m) {
+      const n = normalizeHeading(m[1]);
+      if (n) out.add(n);
+    }
+  }
+  return out;
+}
+
+function demoteHeadings(body: string): string {
+  let inFence = false;
+  return body
+    .split("\n")
+    .map((line) => {
+      if (/^\s*(```|~~~)/.test(line)) inFence = !inFence;
+      const m = !inFence && line.match(/^(#{1,5})(\s.*)$/);
+      return m ? "#" + m[1] + m[2] : line;
+    })
+    .join("\n");
+}
+
+/**
+ * Structure only — never touches a card's words. Every card should line up with a `##` heading in
+ * the source script (matched on the card's title, or failing that its opening body heading, ignoring
+ * case and punctuation). A card that doesn't is folded into the nearest card above it that isn't a
+ * quiz or a "Quiz N Explanation" (so a section after a quiz joins its parent section's card, ahead of
+ * the quiz in reading order): its heading stays as an H3, its own headings move one level down,
+ * durations add up and its description is dropped. Quiz cards, "Quiz N Explanation", Agenda and
+ * Unlock Assignment have no `##` of their own and are left alone, and the first card never merges. A
+ * source with no `##` headings is returned unchanged.
+ */
+export function alignCardsToHeadings(text: string, source: string): string {
+  const h2s = sourceH2s(source);
+  const starts = frontmatterStarts(text);
+  if (h2s.size === 0 || starts.length < 2) return text;
+
+  type Part = { head: string; fm: string; body: string };
+  const parts: Part[] = starts.map((s, i) => ({
+    head: text.slice(s.start, s.end),
+    fm: s.fm,
+    body: text.slice(s.end, i + 1 < starts.length ? starts[i + 1].start : text.length),
+  }));
+
+  const isQuiz = (p: Part) => field(p.fm, "card_type") === "quiz_card";
+  const isExplanation = (p: Part) => /^quiz\s*\d+\s*explanation$/i.test(field(p.fm, "title"));
+  const firstHeading = (p: Part) => p.body.match(/^\s*#{1,6}\s+(\S.*)$/m)?.[1] ?? "";
+  const isAligned = (p: Part) => {
+    const title = field(p.fm, "title");
+    if (isQuiz(p) || /^quiz\s*\d+\s*explanation$/i.test(title) || /^unlock assignment/i.test(title) || normalizeHeading(title) === "agenda") return true;
+    return h2s.has(normalizeHeading(title)) || h2s.has(normalizeHeading(firstHeading(p)));
+  };
+
+  const kept: Part[] = [parts[0]];
+  for (const p of parts.slice(1)) {
+    if (isAligned(p)) {
+      kept.push(p);
+      continue;
+    }
+    let target = kept.length - 1;
+    while (target >= 0 && (isQuiz(kept[target]) || isExplanation(kept[target]))) target--;
+    if (target < 0) {
+      kept.push(p);
+      continue;
+    }
+    const above = kept[target];
+    const opensWithHeading = /^\s*#{1,6}\s+\S/.test(p.body);
+    const body = demoteHeadings(p.body).trim();
+    const added = opensWithHeading ? body : `### ${field(p.fm, "title")}\n\n${body}`;
+    const gap = p.body.match(/\s*$/)?.[0] ?? "";
+    above.body = above.body.replace(/\s+$/, "") + "\n\n" + added + gap;
+
+    const a = field(above.fm, "duration");
+    const b = field(p.fm, "duration");
+    if (a !== "" && b !== "" && Number.isFinite(Number(a)) && Number.isFinite(Number(b))) {
+      const total = String(Number(a) + Number(b));
+      above.head = above.head.replace(/^duration:[ \t]*.*$/m, `duration: ${total}`);
+      above.fm = above.fm.replace(/^duration:[ \t]*.*$/m, `duration: ${total}`);
+    }
+  }
+  return text.slice(0, starts[0].start) + kept.map((p) => p.head + p.body).join("");
+}
+
 export function splitCards(text: string): Card[] {
   const starts = frontmatterStarts(text);
   if (starts.length === 0) {

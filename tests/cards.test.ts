@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { addTableStyle, markupLineKinds, splitCards, stripOuterFence, TABLE_STYLE } from "@/lib/cards";
+import { addTableStyle, alignCardsToHeadings, markupLineKinds, splitCards, stripOuterFence, TABLE_STYLE } from "@/lib/cards";
 
 const card = (title: string, type = "cue_card") =>
   `---\ntitle: ${title}\ndescription: d\nduration: 60\ncard_type: ${type}\n---\n\n# ${title}\n\nBody of ${title}\n`;
@@ -36,7 +36,7 @@ describe("splitCards", () => {
   it("finds every card in the real golden examples", () => {
     for (const [file, cue, quiz] of [
       ["prose-cards", 20, 5],
-      ["notebook-cards", 21, 5],
+      ["notebook-cards", 14, 5],
     ] as const) {
       const cards = splitCards(readFileSync(`lib/sop/examples/${file}.md`, "utf8"));
       expect(cards.filter((c) => c.cardType === "cue_card")).toHaveLength(cue);
@@ -129,5 +129,79 @@ describe("addTableStyle", () => {
   it("adds nothing without a table, and ignores table-like lines inside code fences", () => {
     expect(addTableStyle(fm("One") + "\nplain\n")).not.toContain("<style>");
     expect(addTableStyle(fm("One") + "\n```text\n" + table + "```\n")).not.toContain("<style>");
+  });
+});
+
+describe("alignCardsToHeadings", () => {
+  const card = (title: string, body: string, o: { type?: string; duration?: number } = {}) =>
+    `---\ntitle: ${title}\ndescription: ${title}\nduration: ${o.duration ?? 60}\ncard_type: ${o.type ?? "cue_card"}\n---\n\n${body}\n\n`;
+  const source = "## Setting the Scene: GreenSort\ntext\n## Section 1: From One\ntext\n### Notation\ntext\n";
+
+  it("returns the text unchanged when the source has no ## headings", () => {
+    const text = card("One", "## A\nx") + card("Whatever", "## B\ny");
+    expect(alignCardsToHeadings(text, "plain script, **bold** only")).toBe(text);
+  });
+
+  it("leaves cards alone when each title matches a source ## heading, ignoring case and punctuation", () => {
+    const text = card("Setting The Scene GreenSort", "x") + card("Section 1 From One", "y");
+    expect(alignCardsToHeadings(text, source)).toBe(text);
+  });
+
+  it("folds a card with no matching ## heading into the card above, keeping its heading", () => {
+    const text = card("Section 1 From One", "intro", { duration: 100 }) + card("Notation Basics", "## Notation\nsymbols\n### Deeper\nmore", { duration: 50 });
+    const out = alignCardsToHeadings(text, source);
+    expect(splitCards(out)).toHaveLength(1);
+    expect(out).toContain("intro");
+    expect(out).toContain("### Notation\nsymbols\n#### Deeper\nmore");
+    expect(out).toContain("duration: 150");
+    expect(out).not.toContain("title: Notation Basics");
+  });
+
+  it("uses the card's title as an H3 when its body doesn't open with a heading", () => {
+    const text = card("Section 1 From One", "intro") + card("Playground", "just text");
+    expect(alignCardsToHeadings(text, source)).toContain("### Playground\n\njust text");
+  });
+
+  it("keeps a card whose opening body heading matches a ## heading, even if the title differs", () => {
+    const text = card("Section 1 From One", "intro") + card("A nicer title", "## Setting the Scene: GreenSort\nx");
+    expect(splitCards(alignCardsToHeadings(text, source))).toHaveLength(2);
+  });
+
+  it("never touches quiz cards, explanation cards, Agenda or Unlock Assignment", () => {
+    const text =
+      card("Section 1 From One", "intro") +
+      card("Quiz 1", "# Question\nq\n\n# Choices\n- [x] a\n- [ ] b", { type: "quiz_card" }) +
+      card("Quiz 1 Explanation", "e") +
+      card("Agenda", "a") +
+      card("Unlock Assignment & ask learner to solve in live class", "u");
+    expect(alignCardsToHeadings(text, source)).toBe(text);
+  });
+
+  it("skips quiz and explanation cards: a section after a quiz joins the content card above them", () => {
+    const quiz = card("Quiz 1", "# Question\nq\n\n# Choices\n- [x] a\n- [ ] b", { type: "quiz_card" });
+    const text = card("Section 1 From One", "intro") + quiz + card("Quiz 1 Explanation", "e") + card("Playground", "## Playground\nsliders");
+    const out = alignCardsToHeadings(text, source);
+    const cards = splitCards(out);
+    expect(cards.map((c) => c.title)).toEqual(["Section 1 From One", "Quiz 1", "Quiz 1 Explanation"]);
+    expect(cards[0].body).toContain("### Playground\nsliders");
+    expect(cards[2].body).toBe("e");
+  });
+
+  it("never merges into a quiz card, and never moves the first card", () => {
+    const quiz = card("Quiz 1", "# Question\nq\n\n# Choices\n- [x] a\n- [ ] b", { type: "quiz_card" });
+    expect(splitCards(alignCardsToHeadings(quiz + card("Orphan", "y"), source))).toHaveLength(2);
+    expect(splitCards(alignCardsToHeadings(card("Orphan First", "x") + card("Section 1 From One", "y"), source))).toHaveLength(2);
+  });
+
+  it("merges several in a row into the same card, and is idempotent", () => {
+    const text = card("Section 1 From One", "intro") + card("Extra One", "## Extra One\na") + card("Extra Two", "## Extra Two\nb");
+    const once = alignCardsToHeadings(text, source);
+    expect(splitCards(once)).toHaveLength(1);
+    expect(once.indexOf("### Extra One")).toBeLessThan(once.indexOf("### Extra Two"));
+    expect(alignCardsToHeadings(once, source)).toBe(once);
+  });
+
+  it("ignores ## lines inside code fences in the source", () => {
+    expect(alignCardsToHeadings(card("One", "x") + card("Two", "y"), "```\n## One\n## Two\n```\nplain")).toBe(card("One", "x") + card("Two", "y"));
   });
 });

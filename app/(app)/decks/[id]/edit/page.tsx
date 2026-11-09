@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { DeckEditor } from "@/components/DeckEditor";
 import { getUser } from "@/lib/auth";
+import { alignCardsToHeadings } from "@/lib/cards";
 import { getDeckDetail } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export default async function DeckEditPage({ params }: { params: { id: string } 
       module={deck.module}
       className={deck.className}
       source={deck.source}
-      markdown={deck.editedOutput ?? deck.output}
+      markdown={deck.editedOutput ?? alignCardsToHeadings(deck.output, deck.source)}
       initialReviewStatus={deck.reviewStatus}
     />
   );

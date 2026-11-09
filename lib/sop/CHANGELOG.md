@@ -176,3 +176,27 @@ duplicated another rule or actively fought the CRITICAL wording-fidelity rule in
     (letter and brackets dropped); answer-but-no-explanation → a card with just that line; neither → no
     card, all [ ]. Pass-2 check added. Goldens: Correct Answer line added to notebook Quiz 1–4 and all 5
     prose quizzes (code answers backticked); notebook Quiz 5's "**Correct Answer: B. …**" normalized.
+  - "When to start a new cue card" (2026-11-09, at your request): a source `##` heading is now the
+    default card boundary and its wording becomes the card's `title:` (merging an H2 that holds only a
+    line or two stays allowed). Numbered sub-points (3.1, 3.2, ...) are now H3, not H2 — this reverses
+    the 2026-09-24 "flatter" structure above. Added an exception to "Heading levels" since such a card's
+    body now starts at H3 (the H2 is the title). No golden changes: neither example has numbered
+    sub-points, and notebook-cards.md already titles each card from the source's `## Section N` heading.
+    Validator unchanged (it accepts any heading level; only its hint text says "## Heading"). No eval run.
+  - Description (2026-11-09, at your request): `description:` must never be empty or missing, on cue,
+    quiz and explanation cards alike; with nothing else to say it is the title, word for word. Before,
+    the SOP called it "optional" and showed `description:` empty in the Unlock template. Goldens: the 5
+    empty quiz descriptions in prose-cards.md now repeat the title; SOP examples (Quiz 1, Quiz 2, Unlock,
+    the arrays cue card) no longer show "Optional description" or an empty value. SOP-only: the validator
+    still treats description as optional, so nothing enforces this beyond the model following the rule.
+    No eval run.
+  - Card boundaries follow source `##` headings (2026-11-09, at your request): after generation,
+    lib/cards.ts alignCardsToHeadings folds any card that doesn't match a source `##` heading into the
+    card above it (deterministic, words untouched). SOP now says `###` and deeper never start a card
+    when the script has `##` headings, with the old judgement rule kept for scripts that have none.
+    notebook-cards.md: 7 cards that came from `###` headings or "Ask AI" / playground cells were folded
+    into their parent cards as H3 (26 -> 19 cards; the function itself produced the result, validator
+    still 0 errors / 0 warnings). A section after a quiz joins the `##` card above the quiz (the merge
+    skips quiz and Explanation cards), so it reads ahead of that quiz; first version merged it into the
+    Explanation card, which was reverted. prose-cards.md unchanged: its source has no `##` headings, so
+    the step is a no-op there. No eval run.

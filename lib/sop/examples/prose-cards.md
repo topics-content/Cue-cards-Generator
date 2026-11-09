@@ -109,7 +109,7 @@ Now that we have our symbols, let's put them to work. The WHERE clause is the he
 
 ---
 title: Quiz 1
-description:
+description: Quiz 1
 duration: 45
 card_type: quiz_card
 ---
@@ -208,7 +208,7 @@ Filtering for one thing is easy, but business questions are usually more complex
 
 ---
 title: Quiz 2
-description:
+description: Quiz 2
 duration: 45
 card_type: quiz_card
 ---
@@ -323,7 +323,7 @@ As your conditions get longer, your code can start to look a bit messy. If you'r
 
 ---
 title: Quiz 3
-description:
+description: Quiz 3
 duration: 45
 card_type: quiz_card
 ---
@@ -585,7 +585,7 @@ You now have the power to filter 10 million rows down to the exact ten that matt
 
 ---
 title: Quiz 4
-description:
+description: Quiz 4
 duration: 45
 card_type: quiz_card
 ---
@@ -911,7 +911,7 @@ Even pros make mistakes" is generic and doesn't tie the AI segment back to anyth
 
 ---
 title: Quiz 5
-description:
+description: Quiz 5
 duration: 45
 card_type: quiz_card
 ---

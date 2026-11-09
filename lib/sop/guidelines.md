@@ -130,7 +130,7 @@ Every label in the source maps to exactly one output. Copy the span exactly as s
 
 ### Heading levels
 
-No lecture-title heading — cue cards start directly with the first card's metadata. The card's `title:` metadata already names it; the body doesn't need to repeat that name as its own heading unless the card has exactly one extra aside worth calling out (see the second example below). Use H2 for whatever heading actually starts the card's real content; use H3, and H4 if it's needed, for genuine subsections nested under that. `#` (H1) appears only as `# Question` / `# Choices` in quiz cards — never in a cue card.
+No lecture-title heading — cue cards start directly with the first card's metadata. The card's `title:` metadata already names it; the body doesn't need to repeat that name as its own heading unless the card has exactly one extra aside worth calling out (see the second example below). Use H2 for whatever heading actually starts the card's real content; use H3, and H4 if it's needed, for genuine subsections nested under that. The one exception is a numbered cluster (`3`, `3.1`, `3.2`, ...): its body starts directly at H3, because the H2 is the card's `title:` (see "When to start a new cue card"). `#` (H1) appears only as `# Question` / `# Choices` in quiz cards — never in a cue card.
 
 ```
 ## The Complete Architecture Flow
@@ -150,9 +150,13 @@ This is the only exception to heading survival and to "don't drop content". An A
 
 ### When to start a new cue card
 
-A new `---` card is for a genuinely new topic or teaching beat — not for every heading the source has. Only give a subsection its own card when it's substantial enough to stand on its own — its own multi-minute chunk of teaching, its own code walkthrough, its own quiz — not just because it has a heading. A card that ends up holding little more than a heading and one or two lines is a sign two cards should have been one.
+A new `---` card is for a genuinely new topic or teaching beat — not for every heading the source has. **When the script has `##` headings, a heading below `##` (`###` and deeper) never starts a card:** it stays inside the card above it as an H3 (or deeper) heading — a code walkthrough, an interactive playground or an "Ask AI" prompt included. Quiz and "Quiz N Explanation" cards never receive such content: a section that comes right after a quiz goes into the `##` card above that quiz. The only cards without a `##` heading of their own are quiz cards, their "Quiz N Explanation" cards, the Agenda and the Unlock Assignment card. A card that doesn't line up with a `##` heading is folded into the card above it after generation, so don't create one.
 
-**A numbered cluster (`3`, then `3.1`, `3.2`, `3.3`, ...) is one card, and the sub-points are that card's own H2 headings — not nested under a repeated "Section 3" heading.** The card's title metadata already says "Section 3"; don't also write it into the body as a heading. Go straight from the frontmatter into `3.1`, `3.2`, `3.3` as siblings at H2. This applies the same way whether the source is a script or a notebook.
+When the script has no `##` headings at all (a plain document export, say), use judgement instead: only give a subsection its own card when it's substantial enough to stand on its own — its own multi-minute chunk of teaching, its own code walkthrough, its own quiz — not just because it has a heading. A card that ends up holding little more than a heading and one or two lines is a sign two cards should have been one.
+
+**A source `##` (H2) heading is the default card boundary: it starts a new card, and its wording becomes that card's `title:`** — adjusted only as the title-format rules under "Cue Card Format" require (no colon, no full stop). An H2 that holds just a line or two of its own is the one exception: it merges into the neighbouring card instead of getting a card of its own.
+
+**A numbered cluster (`3`, then `3.1`, `3.2`, `3.3`, ...) is one card: `3` is the card's title, and the sub-points are that card's own H3 headings — not H2, and not nested under a repeated "Section 3" heading.** The card's title metadata already says "Section 3"; don't also write it into the body as a heading. Go straight from the frontmatter into `3.1`, `3.2`, `3.3` as siblings at H3. This applies the same way whether the source is a script or a notebook.
 
 ```markdown
 ---
@@ -162,11 +166,11 @@ duration: 1200
 card_type: cue_card
 ---
 
-## 3.1 The Pattern We Keep Repeating
+### 3.1 The Pattern We Keep Repeating
 
 ...
 
-## 3.2 Adding Selectors to the Cart Slice
+### 3.2 Adding Selectors to the Cart Slice
 
 ...
 ```
@@ -227,7 +231,7 @@ An `<img>` tag with `width="500"`. When the script gives no URL, use the placeho
 ````markdown
 ---
 title: Quiz 1
-description: Optional description
+description: Quiz 1
 duration: 120
 card_type: quiz_card
 ---
@@ -286,7 +290,7 @@ Add this card only when the script itself contains an unlock-assignment part —
 ````markdown
 ---
 title: Unlock Assignment & ask learner to solve in live class
-description:
+description: Unlock Assignment & ask learner to solve in live class
 duration: 1800
 card_type: cue_card
 ---
@@ -331,7 +335,7 @@ The content between `---` is the metadata, which includes the following 4 attrib
 - title: The title of the section to be shown on the cards. The title should be descriptive, like chapter names on YouTube, and not generic.
   - Good Example: "Problem - Longest Common Subsequence"
   - Bad Example: "Problem 1 - Optimized Solution"
-- description: Any optional description you would want to show on the cards. This can be different from the content, as content will only be visible when the cue card is opened, and this will be visible always.
+- description: Shown on the card at all times, unlike the content, which is only visible when the card is opened. It must never be empty or left out — on every card, quiz cards and "Quiz N Explanation" cards included. Write a short line about the card when the script gives one; otherwise use the card's title as the description, word for word.
 - duration (in seconds): The ideal estimated duration that the instructor should take to cover this content. As of now, this will be used only for analytical purposes, but later could be used to provide a nudge to the instructor if the need arises.
 - card_type: This will be fixed to the value `cue_card` for all cue cards. This will help the script identify that this markdown file is for a cue card.
 
@@ -340,13 +344,14 @@ Keep the format the same as shared below:
 - The title should never contain a colon or other special characters, not even a full stop (.). A single hyphen used as a separator (e.g. "Opening Hook - 10 Million Rows") is fine.
 - Don't add a space before `:` but add one after it
 - Always add a value for duration
+- Always add a value for description (the title itself, if there's nothing else to say)
 
 Example:
 
 ````markdown
 ---
 title: Introduction to Arrays
-description: Optional description for introduction to arrays slide visible on card
+description: Introduction to Arrays
 duration: 300
 card_type: cue_card
 ---
@@ -375,7 +380,7 @@ Example:
 ````markdown
 ---
 title: Quiz 2
-description: Optional description
+description: Quiz 2
 duration: 45
 card_type: quiz_card
 ---

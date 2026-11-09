@@ -181,7 +181,7 @@ GreenSort can now compute all three raw scores, $z_{\text{Paper}}$, $z_{\text{Pl
 ---
 title: Section 3 From Raw Scores to a Fair Vote
 description: Introduces softmax as the fix for independent sigmoid outputs
-duration: 480
+duration: 1080
 card_type: cue_card
 ---
 
@@ -208,47 +208,7 @@ Raw scores $z_j$ can be negative, since they come from a plain linear combinatio
 Once every score is positive, dividing each one by the total simply rescales the three numbers so that they add up to exactly 1.
 We interpret these normalized outputs as the model's predicted probabilities. Whether those probabilities are well calibrated is a separate question.
 
----
-title: Quiz 3
-description: Identifying which bin gets the highest softmax probability
-duration: 90
-card_type: quiz_card
----
-
-# Question
-
-GreenSort's three neurons output raw scores `z_Paper = 2`, `z_Plastic = 1`, `z_Metal = 0`.
-
-Which bin will receive the highest softmax probability?
-
-# Choices
-
-- [x] Paper
-- [ ] Plastic
-- [ ] Metal
-- [ ] All three will be exactly equal
-
----
-title: Quiz 3 Explanation
-description: Explains why Paper gets the highest probability
-duration: 90
-card_type: cue_card
----
-
-## Quiz 3 Explanation
-
-**Correct Answer:** Paper
-
-**Explanation:** Softmax is a monotonic function of the raw scores: the larger the input `z`, the larger the resulting probability. Since `z_Paper = 2` is the largest of the three scores, Paper receives the largest probability once the scores are exponentiated and normalized, even without computing the exact numbers.
-
----
-title: Interactive Playground Softmax Slider
-description: Sliders to observe how softmax redistributes confidence
-duration: 420
-card_type: cue_card
----
-
-## Interactive playground
+### Interactive playground
 
 ```python=
 # Interactive Playground: Watching Softmax Redistribute Confidence
@@ -296,18 +256,44 @@ interact(
 
 <img src="https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/243/122/original/Screenshot_2026-09-28_at_18.15.19.png?1790599543" alt="image-1" width="500" />
 
----
-title: Ask AI Softmax and Boltzmann Distribution
-description: Prompt connecting softmax to the Boltzmann distribution
-duration: 180
-card_type: cue_card
----
-
-## Ask AI Softmax and Boltzmann Distribution
+### Ask AI Softmax and Boltzmann Distribution
 
 **Ask AI:** Ask an AI assistant to explain the connection between the softmax function and the Boltzmann distribution used in statistical physics to describe the probability of a system occupying different energy states. Write down, in your own words, what the raw score $z$ corresponds to in that physical analogy.
 
 GreenSort can now turn its raw scores into three confident-looking probabilities, say 0.7 for Plastic, 0.2 for Paper, and 0.1 for Metal. But right now, $W$ and $b$ are still just the small random numbers we started with. GreenSort has no reason yet to believe these particular probabilities are any good, and no way of knowing whether this specific guess was right or badly wrong. Producing a probability is not the same as learning. Before GreenSort's weights can improve, its engineers need one more ingredient: a precise, numerical way to score exactly how wrong a given guess was, so that "wrong" becomes something a machine can react to. That is the problem we turn to next.
+
+---
+title: Quiz 3
+description: Identifying which bin gets the highest softmax probability
+duration: 90
+card_type: quiz_card
+---
+
+# Question
+
+GreenSort's three neurons output raw scores `z_Paper = 2`, `z_Plastic = 1`, `z_Metal = 0`.
+
+Which bin will receive the highest softmax probability?
+
+# Choices
+
+- [x] Paper
+- [ ] Plastic
+- [ ] Metal
+- [ ] All three will be exactly equal
+
+---
+title: Quiz 3 Explanation
+description: Explains why Paper gets the highest probability
+duration: 90
+card_type: cue_card
+---
+
+## Quiz 3 Explanation
+
+**Correct Answer:** Paper
+
+**Explanation:** Softmax is a monotonic function of the raw scores: the larger the input `z`, the larger the resulting probability. Since `z_Paper = 2` is the largest of the three scores, Paper receives the largest probability once the scores are exponentiated and normalized, even without computing the exact numbers.
 
 ---
 title: Section 4 Measuring How Wrong GreenSort Was
@@ -394,7 +380,7 @@ card_type: cue_card
 ---
 title: AI Spotlight From Sorting Recyclables to Powering Language Models
 description: Connecting GreenSort's pipeline to real-world large-scale systems
-duration: 240
+duration: 420
 card_type: cue_card
 ---
 
@@ -410,14 +396,7 @@ A few places this exact combination shows up:
 
 The scale is enormously larger, and there are many more layers involved before this final stage, but the mathematics you have derived today, from the shape of $Z$, to why softmax needs an exponential, to why cross-entropy collapses to $-\log(p)$ for the true class, is exactly the mathematics sitting underneath these systems.
 
----
-title: Ask AI Vocabulary Sized Softmax in Language Models
-description: Ask AI prompt comparing GreenSort softmax to LLM vocabulary softmax
-duration: 180
-card_type: cue_card
----
-
-## Ask AI: Vocabulary-Sized Softmax in Language Models
+### Ask AI: Vocabulary-Sized Softmax in Language Models
 
 **Ask AI:** Ask an AI assistant to compare the three-class softmax we used for GreenSort to the vocabulary-sized softmax used at the output of a language model. Specifically, ask how the computation cost changes as the number of classes grows from 3 to over 100,000, and why techniques such as hierarchical softmax or sampling-based losses were developed to address that cost.
 
@@ -426,7 +405,7 @@ Let's come back to GreenSort itself. At this point, we can compute a probability
 ---
 title: Section 5 Teaching GreenSort From Its Mistakes
 description: The 5-step training loop and chef analogy
-duration: 480
+duration: 1950
 card_type: cue_card
 ---
 
@@ -444,14 +423,7 @@ Steps 2 through 5 are repeated many times, with GreenSort's predictions improvin
 
 You can think of this loop the way a chef refines a recipe: taste the dish (forward propagation), decide how far it is from what was intended (loss), work out which specific ingredient caused the problem and by how much (backward propagation), then adjust that ingredient's quantity slightly (update), and test again.
 
----
-title: Forward Propagation Revisited
-description: Recap of the forward pass and its computational graph
-duration: 240
-card_type: cue_card
----
-
-## Forward Propagation, Revisited
+### Forward Propagation, Revisited
 
 For a batch of items on the belt, forward propagation for GreenSort is simply:
 
@@ -467,14 +439,7 @@ X, W, b  --->  Z = XW + b  --->  P = softmax(Z)  --->  J = CrossEntropy(P, Y)
 
 Every arrow in this diagram represents a step we already know how to compute going forward. Forward propagation gets us as far as the single number $J$, the loss. But $J$ alone does not tell the engineers how to change $W$ or $b$. Since $W$ and $b$ sit at the very start of this diagram and $J$ sits at the very end, we need a way to relate a change at the start to its effect at the end. That is exactly what backward propagation does: it traces this same diagram in reverse.
 
----
-title: Backward Propagation Assigning Blame
-description: Chain rule derivation using the relay race analogy
-duration: 600
-card_type: cue_card
----
-
-## Backward Propagation: Assigning Blame
+### Backward Propagation: Assigning Blame
 
 <span style="color: violet;">Question: How did we reduce the loss in Logistic Regression?</span>
 
@@ -489,6 +454,15 @@ Formally, for our computational graph $X, W, b \to Z \to P \to J$, the chain rul
 $$\frac{\partial J}{\partial w} = \frac{\partial J}{\partial p} \cdot \frac{\partial p}{\partial z} \cdot \frac{\partial z}{\partial w}$$
 
 Reading this from right to left: $\dfrac{\partial z}{\partial w}$ tells us how a change in a weight changes the raw score $z$; $\dfrac{\partial p}{\partial z}$ tells us how that change in $z$ changes the softmax probability $p$; and $\dfrac{\partial J}{\partial p}$ tells us how that change in $p$ changes the final loss $J$. Multiplying these three effects together, link by link along the chain, tells us exactly how much a small nudge to $w$ ultimately moves the loss $J$, which is precisely the information gradient descent needs to update $w$ in the right direction.
+
+### Ask AI: Deriving $\dfrac{\partial J}{\partial z}$ for Softmax and Cross-Entropy
+
+**Ask AI:** Ask an AI assistant to derive $\dfrac{\partial J}{\partial z}$ in full for the specific combination of softmax and Categorical Cross-Entropy, and to confirm that it simplifies neatly to $p - y$. Compare that clean, worked-out derivation with the conceptual, link-by-link chain rule explanation from this class, and note down any step you find surprising.
+
+### Interactive playground
+Visualise Forward and backward propagation
+
+<iframe src="https://shrijankumar1-maker.github.io/NN-visualiser/" width="100%" height="1000" style="border:1px solid #ccc; border-radius:8px;"></iframe>
 
 ---
 title: Quiz 5
@@ -520,29 +494,6 @@ card_type: cue_card
 **Correct Answer:** How J changes with respect to P, i.e. dJ/dP
 
 **Explanation:** Backward propagation traces the computational graph in reverse, starting from the loss J and working backward. The very first quantity available is how J changes with respect to the node immediately before it, P, since J was computed directly from P. Every earlier partial derivative, including the one for W, is obtained by multiplying this term with further terms further back along the chain.
-
----
-title: Ask AI Deriving dJ by dz for Softmax and Cross Entropy
-description: Ask AI prompt deriving dJ/dz and comparing it to the chain rule explanation
-duration: 150
-card_type: cue_card
----
-
-## Ask AI: Deriving $\dfrac{\partial J}{\partial z}$ for Softmax and Cross-Entropy
-
-**Ask AI:** Ask an AI assistant to derive $\dfrac{\partial J}{\partial z}$ in full for the specific combination of softmax and Categorical Cross-Entropy, and to confirm that it simplifies neatly to $p - y$. Compare that clean, worked-out derivation with the conceptual, link-by-link chain rule explanation from this class, and note down any step you find surprising.
-
----
-title: Interactive Playground NN Visualiser
-description: IFrame embed to visualise forward and backward propagation
-duration: 480
-card_type: cue_card
----
-
-## Interactive playground
-Visualise Forward and backward propagation
-
-<iframe src="https://shrijankumar1-maker.github.io/NN-visualiser/" width="100%" height="1000" style="border:1px solid #ccc; border-radius:8px;"></iframe>
 
 ---
 title: Wrap Up
